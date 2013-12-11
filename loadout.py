@@ -5,10 +5,7 @@ import subprocess
 import random
 import os, shutil
 
-print 'Number of arguments:', len(sys.argv), 'arguments.'
-print 'Argument List:', str(sys.argv)
-
-usageString='loadOut.py -n <hostname>'
+usageString='loadOut.py -r <target root directory> -n <hostname>'
 
 def placefile( filename, targetdir ):
     command='cp '+filename+' '+targetdir
