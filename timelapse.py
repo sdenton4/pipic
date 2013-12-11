@@ -28,14 +28,20 @@ def avgbrightness(im):
 def dynamic_adjust(v, delta,target):
     return int( v*(1.0+delta*1.0/target) )
 
-def argassign(var, arg):
+def argassign(arg, typ='int'):
     #Assign integer arg to variable, or quit if it fails.
     try:
-        var=int(arg)
+        if typ=='float':
+            return float(arg)
+        elif typ=='int':
+            return int(arg)
+        else:
+            return str(arg)
     except:
        print usagestring
        sys.exit(2)
-    return var
+    return False
+
 
 def main(argv):
     w=str(int(2592/4))
@@ -58,7 +64,7 @@ def main(argv):
     maxss=350000
 
     try:
-       opts, args = getopt.getopt(argv,"whitnbso:", [])
+       opts, args = getopt.getopt(argv,"qw:h:i:t:n:b:s:o:", [])
     except getopt.GetoptError:
        print usagestring
        sys.exit(2)
@@ -68,24 +74,24 @@ def main(argv):
             print usagestring
             sys.exit()
         elif opt=="-w":
-            w=argassign(w,arg)
+            w=argassign(arg,'int')
             w=str(w)
         elif opt=="-h":
-            h=argassign(h,arg)
+            h=argassign(arg,'int')
             h=str(h)
         elif opt=="-i":
-            interval=argassign(interval,arg)
+            interval=argassign(arg,'int')
         elif opt=="-t":
-            maxtime=argassign(maxtime,arg)
+            maxtime=argassign(arg,'int')
             maxtime=maxtime*60
         elif opt=="-n":
-            maxshots=argassign(maxshots,arg)
+            maxshots=argassign(arg,'int')
         elif opt=="-b":
-            targetBrightness=argassign(targetBrightness,arg)
+            targetBrightness=argassign(arg,'int')
         elif opt=="-s":
-            initialss=argassign(initialss,arg)
+            initialss=argassign(arg,'int')
         elif opt=="-o":
-            initialiso=argassign(initialiso,arg)
+            initialiso=argassign(arg,'int')
 
     currentss=initialss
     currentiso=initialiso
