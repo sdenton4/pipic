@@ -1,0 +1,1 @@
+screen fbi python-imaging imagemagick mplayer
