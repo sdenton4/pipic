@@ -20,7 +20,7 @@ hostcolors+=['teal','taupe','neon']
 
 def main(argv):
     try:
-       opts, args = getopt.getopt(argv,"h:rn:", ["root=", "hostname=",])
+       opts, args = getopt.getopt(argv,"hr:n:", ["root=", "hostname=",])
     except getopt.GetoptError:
        print usageString
        sys.exit(2)
@@ -40,7 +40,7 @@ def main(argv):
                 os.listdir(piroot)
             except:
                 print "Root directory not found."
-                return False
+                sys.exit(2)
         elif opt in ("-n", "--hostname"):
           hostname = arg.strip()
           if hostname not in hostcolors:
