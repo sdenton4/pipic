@@ -44,17 +44,16 @@ def argassign(arg, typ='int'):
 
 
 def main(argv):
-    w=str(int(2592/4))
-    h=str(int(1944/4))
+    w=str(int(2592/2))
+    h=str(int(1944/2))
     interval=15
-    maxtime=60*60*23
-    maxshots=5000
+    maxtime=60*60*24-30
+    maxshots=maxtime/interval
     targetBrightness=100
     initialss=10000
     initialiso=100
 
     brightwidth=4
-    thresh=0.01
 
     brData=[]
 
@@ -102,6 +101,7 @@ def main(argv):
     start_time=time.time()
     elapsed=time.time()-start_time
     shots_taken=0
+    index=0
 
     while (elapsed<maxtime or maxtime==-1) and (shots_taken<maxshots or maxshots==-1):
         loopstart=time.time()
@@ -114,12 +114,14 @@ def main(argv):
         options+=' -t 100'
         options+=' -ss '+str(currentss)
         options+=' -ISO '+str(currentiso)
-        options+=' -o '+filename
+        options+=' -o new.jpg'
         subprocess.call('raspistill '+options, shell=True)
-        im=Image.open(filename)
+        im=Image.open('new.jpg')
+        #Saves file without exif and raster data; reduces file size by 90%,
+        im.save(filename)
         br=avgbrightness(im)
         if len(brData)==brightwidth:
-            brData[shots_taken%brightwidth]=br
+            brData[index%brightwidth]=br
         else:
             brData.append(br)
 
@@ -151,6 +153,7 @@ def main(argv):
                 currentiso=min([currentiso,maxiso])
 
         shots_taken+=1
+        index=(index+1)%brightwidth
         loopend=time.time()
         elapsed=loopend-start_time
 
