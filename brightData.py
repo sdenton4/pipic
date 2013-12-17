@@ -98,6 +98,9 @@ def main(argv):
         im=Image.open('new.jpg')
         im.save(filename2)
 
+        ss=random.randint(minss, maxss)
+        iso=random.randint(miniso, maxiso)
+
     return True
 
 #-------------------------------------------------------------------------------
