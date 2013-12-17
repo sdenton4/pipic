@@ -84,8 +84,7 @@ def main(argv):
         options+=' -ISO '+str(initialiso)
         options+=' -o new.jpg'
         subprocess.call('raspistill '+options, shell=True)
-        im=Image.open('new.jpg')
-        im.save(filename1)
+        im1=Image.open('new.jpg')
 
         #Take the picture with new ss and iso.
         options='-hf -vf -awb off -n'
@@ -95,8 +94,12 @@ def main(argv):
         options+=' -ISO '+str(iso)
         options+=' -o new.jpg'
         subprocess.call('raspistill '+options, shell=True)
-        im=Image.open('new.jpg')
-        im.save(filename2)
+        im2=Image.open('new.jpg')
+        h=im.convert('L').histogram()
+        #Ignore mostly-black and mostly-white images.
+        if h[0]<64*16 and h[-1]<64*16:
+            im1.save(filename1)
+            im2.save(filename2)
 
         ss=random.randint(minss, maxss)
         iso=random.randint(miniso, maxiso)
