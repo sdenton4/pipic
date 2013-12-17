@@ -6,6 +6,7 @@ import os, sys, getopt
 usagestring="Usage: brightData.py [options]\n"
 usagestring+="Options:\n"
 usagestring+="-q      : Print this usage screen.\n"
+usagestring+="-n      : Numbe of shots to take.  Best not to mix with manual ss/iso.\n"
 usagestring+="-s 5000 : Manually set shutter speed.\n"
 usagestring+="-o 100  : Manually set ISO.\n"
 
@@ -38,6 +39,7 @@ def main(argv):
 
     ss=None
     iso=None
+    nshots=1
 
     try:
        opts, args = getopt.getopt(argv,"qn:s:o:", [])
@@ -49,6 +51,8 @@ def main(argv):
         if opt == '-q':
             print usagestring
             sys.exit()
+        elif opt=="-n":
+            nshots=argassign(arg,'int')
         elif opt=="-s":
             ss=argassign(arg,'int')
         elif opt=="-o":
@@ -66,32 +70,33 @@ def main(argv):
     except:
         os.mkdir('/home/pi/brdata/')
 
-    dtime=subprocess.check_output(['date', '+%y%m%d_%T']).strip()
-    dtime=dtime.replace(':', '.')
-    filename1='/home/pi/brdata/'+hostname+'_'+dtime+'_'+'base.jpg'
-    filename2='/home/pi/brdata/'+hostname+'_'+dtime+'_'+str(ss)+'_'+str(iso)+'.jpg'
+    for i in range(nshots):
+        dtime=subprocess.check_output(['date', '+%y%m%d_%T']).strip()
+        dtime=dtime.replace(':', '.')
+        filename1='/home/pi/brdata/'+hostname+'_'+dtime+'_'+'base.jpg'
+        filename2='/home/pi/brdata/'+hostname+'_'+dtime+'_'+str(ss)+'_'+str(iso)+'.jpg'
 
-    #Take the picture with base ss and iso.
-    options='-hf -vf -awb off -n'
-    options+=' -w '+w+' -h '+h
-    options+=' -t 100'
-    options+=' -ss '+str(initialss)
-    options+=' -ISO '+str(initialiso)
-    options+=' -o new.jpg'
-    subprocess.call('raspistill '+options, shell=True)
-    im=Image.open('new.jpg')
-    im.save(filename1)
+        #Take the picture with base ss and iso.
+        options='-hf -vf -awb off -n'
+        options+=' -w '+w+' -h '+h
+        options+=' -t 100'
+        options+=' -ss '+str(initialss)
+        options+=' -ISO '+str(initialiso)
+        options+=' -o new.jpg'
+        subprocess.call('raspistill '+options, shell=True)
+        im=Image.open('new.jpg')
+        im.save(filename1)
 
-    #Take the picture with new ss and iso.
-    options='-hf -vf -awb off -n'
-    options+=' -w '+w+' -h '+h
-    options+=' -t 100'
-    options+=' -ss '+str(ss)
-    options+=' -ISO '+str(iso)
-    options+=' -o new.jpg'
-    subprocess.call('raspistill '+options, shell=True)
-    im=Image.open('new.jpg')
-    im.save(filename2)
+        #Take the picture with new ss and iso.
+        options='-hf -vf -awb off -n'
+        options+=' -w '+w+' -h '+h
+        options+=' -t 100'
+        options+=' -ss '+str(ss)
+        options+=' -ISO '+str(iso)
+        options+=' -o new.jpg'
+        subprocess.call('raspistill '+options, shell=True)
+        im=Image.open('new.jpg')
+        im.save(filename2)
 
     return True
 
