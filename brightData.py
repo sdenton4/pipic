@@ -95,9 +95,9 @@ def main(argv):
         options+=' -o new.jpg'
         subprocess.call('raspistill '+options, shell=True)
         im2=Image.open('new.jpg')
-        h=im2.convert('L').histogram()
+        histogram=im2.convert('L').histogram()
         #Ignore mostly-black and mostly-white images.
-        if h[0]<64*16 and h[-1]<64*16:
+        if histogram[0]<64*16 and histogram[-1]<64*16:
             im1.save(filename1)
             im2.save(filename2)
 
