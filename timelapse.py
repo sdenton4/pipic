@@ -32,13 +32,17 @@ def argassign(arg, typ='int'):
 
 class timelapse:
 
-    def __init__(self,w,h,interval,maxtime,maxshots,targetBrightness,hostname):
+    def __init__(self,w,h,interval,maxtime,maxshots,targetBrightness):
         self.w=w
         self.h=h
         self.interval=interval
         self.maxtime=maxtime
         self.maxshots=maxshots
         self.targetBrightness=targetBrightness
+
+        f=open('/etc/hostname')
+        hostname=f.read().strip().replace(' ','')
+        f.close()
         self.hostname=hostname
 
         self.miniso=100
@@ -221,11 +225,7 @@ def main(argv):
         elif opt=="-b":
             targetBrightness=argassign(arg,'int')
 
-    f=open('/etc/hostname')
-    hostname=f.read().strip().replace(' ','')
-    f.close()
-
-    TL = timelapse(w,h,interval,maxtime,maxshots,targetBrightness,hostname)
+    TL = timelapse(w,h,interval,maxtime,maxshots,targetBrightness)
 
     TL.timelapser()
 
