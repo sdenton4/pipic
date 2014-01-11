@@ -15,9 +15,13 @@ usagestring+="-i 15   : Set photo interval in seconds.  Min recommended: 5\n"
 usagestring+="-t 60   : Set maximum duration of program in minutes.  -1 means no limit.\n"
 usagestring+="-n 5000 : Set maximum number of pictures to take.\n"
 usagestring+="-b 100  : Set target brightness of images (0-255).  Recommended value is 100.\n"
-
+usagestring+="-d 256  : Maximum allowed distance from target brightness.  Discards too bright/dark.\n"
+usagestring+="        : Set -d to 256 to keep all images.\n"
 def argassign(arg, typ='int'):
-    #Assign integer arg to variable, or quit if it fails.
+    """
+    A small routine for taking arguments and modifying their type to 
+    int, str, or float.
+    """
     try:
         if typ=='float':
             return float(arg)
@@ -31,14 +35,40 @@ def argassign(arg, typ='int'):
     return False
 
 class timelapse:
+    """
+    Timelapser class.
 
-    def __init__(self,w,h,interval,maxtime,maxshots,targetBrightness):
+    Options:
+        `w` : Width of images.
+        `h` : Height of images.
+        `interval` : Interval of shots, in seconds.  Recommended minimum is 10s.
+        `maxtime` : Maximum amount of time, in seconds, to run the timelapse for.
+            Set to 0 for no maximum.
+        `maxshots` : Maximum number of pictures to take.  Set to 0 for no maximum.
+        `targetBrightness` : Desired brightness of images, on a scale of 0 to 255.
+        `maxdelta` : Allowed variance from target brightness.  Discards images that 
+            are more than `maxdelta` from `targetBrightness`.  Set to 256 to keep
+            all images.
+
+    Once the timelapser is initialized, use the `findinitialparams` method to find
+    an initial value for shutterspeed and ISO, to match the targetBrightness.
+
+    Then run the `timelapser` method to initiate the actual timelapse.
+
+    EXAMPLE::
+        T=timelapse()
+        T.findinitialparams()
+        T.timelapser()
+    """
+    def __init__(self,w=1296,h=972,interval=15,maxtime=0,maxshots=0,targetBrightness=100,maxdelta=256):
+
         self.w=w
         self.h=h
         self.interval=interval
         self.maxtime=maxtime
         self.maxshots=maxshots
         self.targetBrightness=targetBrightness
+        self.maxdelta=maxdelta
 
         f=open('/etc/hostname')
         hostname=f.read().strip().replace(' ','')
@@ -48,7 +78,7 @@ class timelapse:
         self.miniso=100
         self.maxiso=800
         self.minss=100
-        self.maxss=350000
+        self.maxss=1500000
 
         #Brightness data caching.
         self.brightwidth=4
@@ -127,13 +157,18 @@ class timelapse:
                     break
                 else:
                     killtoken=True
-            if self.currentss==self.minss and self.currentiso==self.miniso:
+            elif self.currentss==self.minss and self.currentiso==self.miniso:
                 if killtoken==True:
                     break
                 else:
                     killtoken=True
         return True
 
+    def maxxedbrightness(self):
+        return (self.currentss==self.maxss and self.currentiso==self.maxiso)
+
+    def minnedbrightness(self):
+        return (self.currentss==self.minss and self.currentiso==self.miniso)
 
     def timelapser(self):
         start_time=time.time()
@@ -141,7 +176,7 @@ class timelapse:
         shots_taken=0
         index=0
 
-        while (elapsed<self.maxtime or self.maxtime==-1) and (shots_taken<self.maxshots or self.maxshots==-1):
+        while (elapsed<self.maxtime or self.maxtime==0) and (shots_taken<self.maxshots or self.maxshots==0):
             loopstart=time.time()
 
             dtime=subprocess.check_output(['date', '+%y%m%d_%T']).strip()
@@ -175,16 +210,14 @@ class timelapse:
             elapsed=loopend-start_time
 
             print 'SS: ', self.currentss, '\tISO: ', self.currentiso, '\t', self.lastbr, '\t', shots_taken, '\t', loopend-loopstart
-            maxxedbr=(self.currentss==self.maxss and self.currentiso==self.maxiso)
-            minnedbr=(self.currentss==self.minss and self.currentiso==self.miniso)
             delta=self.targetBrightness-self.lastbr
-            if abs(delta)>32 and not (maxxedbr or minnedbr):
+            #if abs(delta)>self.maxdelta and not (maxxedbr or minnedbr):
+            if abs(delta)>self.maxdelta:
                 #Too far from target brightness.
                 shots_taken-=1
                 os.remove(filename)
-            else:
-                #Wait for next shot.
-                time.sleep(max([0,self.interval-(loopend-loopstart)]))
+            #Wait for next shot.
+            time.sleep(max([0,self.interval-(loopend-loopstart)]))
 
 
 #-------------------------------------------------------------------------------
@@ -192,12 +225,8 @@ class timelapse:
 
 def main(argv):
 
-    w=1296
-    h=972
-    interval=15
-    maxtime=60*60*24-30
-    maxshots=int(maxtime/interval)
-    targetBrightness=100
+
+    TL = timelapse()
 
     try:
        opts, args = getopt.getopt(argv,"qw:h:i:t:n:b:s:o:", [])
@@ -210,22 +239,20 @@ def main(argv):
             print usagestring
             sys.exit()
         elif opt=="-w":
-            w=argassign(arg,'int')
+            TL.w=argassign(arg,'int')
             w=str(w)
         elif opt=="-h":
-            h=argassign(arg,'int')
+            TL.h=argassign(arg,'int')
             h=str(h)
         elif opt=="-i":
-            interval=argassign(arg,'int')
+            TL.interval=argassign(arg,'int')
         elif opt=="-t":
             maxtime=argassign(arg,'int')
-            maxtime=maxtime*60
+            TL.maxtime=maxtime*60
         elif opt=="-n":
-            maxshots=argassign(arg,'int')
+            TL.maxshots=argassign(arg,'int')
         elif opt=="-b":
-            targetBrightness=argassign(arg,'int')
-
-    TL = timelapse(w,h,interval,maxtime,maxshots,targetBrightness)
+            TL.targetBrightness=argassign(arg,'int')
 
     TL.timelapser()
 
