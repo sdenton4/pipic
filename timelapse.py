@@ -5,6 +5,7 @@ import os
 import sys, getopt
 import subprocess
 import time
+import zmq
 
 usagestring="Usage: timelaspe.py [options]\n"
 usagestring+="Options:\n"
@@ -16,7 +17,9 @@ usagestring+="-t 60   : Set maximum duration of program in minutes.  -1 means no
 usagestring+="-n 5000 : Set maximum number of pictures to take.\n"
 usagestring+="-b 100  : Set target brightness of images (0-255).  Recommended value is 100.\n"
 usagestring+="-d 256  : Maximum allowed distance from target brightness.  Discards too bright/dark.\n"
+usagestring+="-m c    : Determines where to meter brightness.  (c)enter,(l)eft,(r)ight, or (a)ll.\n"
 usagestring+="        : Set -d to 256 to keep all images.\n"
+
 def argassign(arg, typ='int'):
     """
     A small routine for taking arguments and modifying their type to 
@@ -57,8 +60,15 @@ class timelapse:
 
     EXAMPLE::
         T=timelapse()
-        T.findinitialparams()
         T.timelapser()
+
+    The timelapser broadcasts zmq messages as it takes pictures.
+    The `listen` method sets up the timelapser to listen for signals from 192.168.0.1,
+    and take a shot when a signal is received.
+
+    EXAMPLE::
+        T=timelapse()
+        T.listen()
     """
     def __init__(self,w=1296,h=972,interval=15,maxtime=0,maxshots=0,targetBrightness=100,maxdelta=256):
 
@@ -69,6 +79,10 @@ class timelapse:
         self.maxshots=maxshots
         self.targetBrightness=targetBrightness
         self.maxdelta=maxdelta
+
+        #metersite is one of 'c', 'a', 'l', or 'r', for center, all, left or right.
+        #Chooses a region of the image to use for brightness measurements.
+        self.metersite='c'
 
         f=open('/etc/hostname')
         hostname=f.read().strip().replace(' ','')
@@ -83,8 +97,11 @@ class timelapse:
         #Brightness data caching.
         self.brightwidth=4
         self.brData=[]
+        self.brindex=0
         self.lastbr=0
         self.avgbr=0
+
+        self.shots_taken=0
 
         #Get initial ss and iso
         print 'Finding initial SS and ISO....'
@@ -103,7 +120,30 @@ class timelapse:
         return 'A timelapse instance.'
 
     def avgbrightness(self, im):
+        meter=self.metersite
         aa=im.convert('L')
+        (h,w)=aa.size
+        if meter=='c':
+            top=int(1.0*h/2-.15*h)+1
+            bottom=int(1.0*h/2+.15*h)-1
+            left=int(1.0*w/2-.15*w)+1
+            right=int(1.0*h/2+.15*h)+1
+        elif meter=='l':
+            top=int(1.0*h/2-.15*h)+1
+            bottom=int(1.0*h/2+.15*h)-1
+            left=0
+            right=int(.3*h)+2
+        elif meter=='r':
+            top=int(1.0*h/2-.15*h)+1
+            bottom=int(1.0*h/2+.15*h)-1
+            left=h-int(.3*h)-2
+            right=h
+        else:
+            top=0
+            bottom=h
+            left=0
+            right=w
+        aa=aa.crop((left,top,right,bottom))
         pixels=(aa.size[0]*aa.size[1])
         h=aa.histogram()
         mu0=sum([i*h[i] for i in range(len(h))])/pixels
@@ -165,59 +205,119 @@ class timelapse:
         return True
 
     def maxxedbrightness(self):
+        """
+        Check whether we've reached maximum SS and ISO.
+        """
         return (self.currentss==self.maxss and self.currentiso==self.maxiso)
 
     def minnedbrightness(self):
+        """
+        Check whether we've reached minimum SS and ISO.
+        """
         return (self.currentss==self.minss and self.currentiso==self.miniso)
 
+
+    def shoot(self,filename=None,ssiso_adjust=True):
+        """
+        Take a photo and save it at a specified filename.
+        """
+        options='-hf -vf -awb off -n'
+        options+=' -w '+str(self.w)+' -h '+str(self.h)
+        options+=' -t 50'
+        options+=' -ss '+str(self.currentss)
+        options+=' -ISO '+str(self.currentiso)
+        options+=' -o new.jpg'
+        subprocess.call('raspistill '+options, shell=True)
+        im=Image.open('new.jpg')
+        #Saves file without exif and raster data; reduces file size by 90%,
+        if filename!=None:
+            im.save(filename)
+
+        if not ssiso_adjust: return None
+
+        self.lastbr=self.avgbrightness(im)
+        if len(self.brData)==self.brightwidth:
+            self.brData[self.brindex%self.brightwidth]=self.lastbr
+        else:
+            self.brData.append(self.lastbr)
+
+        #Dynamically adjust ss and iso.
+        self.avgbr=sum(self.brData)/len(self.brData)
+        self.dynamic_adjust()
+        self.shots_taken+=1
+        self.brindex=(self.brindex+1)%self.brightwidth
+
+        delta=self.targetBrightness-self.lastbr
+        #if abs(delta)>self.maxdelta and not (maxxedbr or minnedbr):
+        if abs(delta)>self.maxdelta:
+            #Too far from target brightness.
+            self.shots_taken-=1
+            os.remove(filename)
+
+
     def timelapser(self):
+        """
+        Takes pictures at specified interval.
+        """
         start_time=time.time()
         elapsed=time.time()-start_time
-        shots_taken=0
-        index=0
 
-        while (elapsed<self.maxtime or self.maxtime==0) and (shots_taken<self.maxshots or self.maxshots==0):
+        #Set up broadcast for zmq.
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUB)
+        self.socket.bind("tcp://*:5556")
+
+        while (elapsed<self.maxtime or self.maxtime==0) and (self.shots_taken<self.maxshots or self.maxshots==0):
             loopstart=time.time()
 
             dtime=subprocess.check_output(['date', '+%y%m%d_%T']).strip()
             dtime=dtime.replace(':', '.')
+
+            #Broadcast options for this picture.
+            command='0 shoot {} {} {} {} {}'.format(self.w, self.h, self.currentss, self.currentiso, dtime)
+            self.socket.send(command)
+
+            #Take a picture.
             filename='/home/pi/pictures/'+self.hostname+'_'+dtime+'.jpg'
-            options='-hf -vf -awb off -n'
-            options+=' -w '+str(self.w)+' -h '+str(self.h)
-            options+=' -t 50'
-            options+=' -ss '+str(self.currentss)
-            options+=' -ISO '+str(self.currentiso)
-            options+=' -o new.jpg'
-            subprocess.call('raspistill '+options, shell=True)
-            im=Image.open('new.jpg')
-            #Saves file without exif and raster data; reduces file size by 90%,
-            im.save(filename)
+            self.shoot(filename=filename)
 
-            self.lastbr=self.avgbrightness(im)
-            if len(self.brData)==self.brightwidth:
-                self.brData[index%self.brightwidth]=self.lastbr
-            else:
-                self.brData.append(self.lastbr)
-
-            #Dynamically adjust ss and iso.
-            self.avgbr=sum(self.brData)/len(self.brData)
-
-            self.dynamic_adjust()
-
-            shots_taken+=1
-            index=(index+1)%self.brightwidth
             loopend=time.time()
             elapsed=loopend-start_time
 
-            print 'SS: ', self.currentss, '\tISO: ', self.currentiso, '\t', self.lastbr, '\t', shots_taken, '\t', loopend-loopstart
-            delta=self.targetBrightness-self.lastbr
-            #if abs(delta)>self.maxdelta and not (maxxedbr or minnedbr):
-            if abs(delta)>self.maxdelta:
-                #Too far from target brightness.
-                shots_taken-=1
-                os.remove(filename)
+            print 'SS: ', self.currentss, '\tISO: ', self.currentiso, '\t', self.lastbr, '\t', self.shots_taken, '\t', loopend-loopstart
+
             #Wait for next shot.
             time.sleep(max([0,self.interval-(loopend-loopstart)]))
+
+        self.socket.close()
+
+    def listen(self):
+        #  Socket to talk to server
+        context = zmq.Context()
+        socket = context.socket(zmq.SUB)
+        socket.connect("tcp://192.168.0.1:5556")
+        channel = "0"
+        socket.setsockopt(zmq.SUBSCRIBE, channel)
+
+        #Get hostname
+        f=open('/etc/hostname')
+        hostname=f.read().strip().replace(' ','')
+        f.close()
+
+        while True:
+            command = socket.recv()
+            command=command.split(" ")
+            print "Message recieved: " + str(command)
+            if command[1]=="quit":
+                break
+            elif command[1]=="shoot":
+                [ch,com,w,h,ss,iso,dtime]=command
+                filename='/home/pi/pictures/'+hostname+'_'+dtime+'.jpg'
+                self.shoot(filename)
+                print 'SS: ', self.currentss, '\tISO: ', self.currentiso, '\t', self.lastbr, '\t', self.shots_taken
+
+        socket.close()
+        return True
 
 
 #-------------------------------------------------------------------------------
@@ -228,8 +328,10 @@ def main(argv):
 
     TL = timelapse()
 
+    listen=False
+
     try:
-       opts, args = getopt.getopt(argv,"qw:h:i:t:n:b:s:o:", [])
+       opts, args = getopt.getopt(argv,"qLw:h:i:t:n:b:s:o:", [])
     except getopt.GetoptError:
        print usagestring
        sys.exit(2)
@@ -240,10 +342,8 @@ def main(argv):
             sys.exit()
         elif opt=="-w":
             TL.w=argassign(arg,'int')
-            w=str(w)
         elif opt=="-h":
             TL.h=argassign(arg,'int')
-            h=str(h)
         elif opt=="-i":
             TL.interval=argassign(arg,'int')
         elif opt=="-t":
@@ -251,10 +351,17 @@ def main(argv):
             TL.maxtime=maxtime*60
         elif opt=="-n":
             TL.maxshots=argassign(arg,'int')
+        elif opt=="-c":
+            TL.metersite=argassign(arg,'str')
         elif opt=="-b":
             TL.targetBrightness=argassign(arg,'int')
+        elif opt=="-L":
+            listen=True
 
-    TL.timelapser()
+    if listen:
+        TL.listen()
+    else:
+        TL.timelapser()
 
     return True
 
