@@ -127,17 +127,17 @@ class timelapse:
             top=int(1.0*h/2-.15*h)+1
             bottom=int(1.0*h/2+.15*h)-1
             left=int(1.0*w/2-.15*w)+1
-            right=int(1.0*h/2+.15*h)+1
+            right=int(1.0*w/2+.15*w)+1
         elif meter=='l':
             top=int(1.0*h/2-.15*h)+1
             bottom=int(1.0*h/2+.15*h)-1
             left=0
-            right=int(.3*h)+2
+            right=int(.3*w)+2
         elif meter=='r':
             top=int(1.0*h/2-.15*h)+1
-            bottom=int(1.0*h/2+.15*h)-1
-            left=h-int(.3*h)-2
-            right=h
+            bottom=int(1.0*w/2+.15*w)-1
+            left=h-int(.3*w)-2
+            right=w
         else:
             top=0
             bottom=h
@@ -178,7 +178,7 @@ class timelapse:
     def findinitialparams(self):
         killtoken=False
         while abs(self.targetBrightness-self.lastbr)>4:
-            options='-hf -vf -awb off -n'
+            options='-awb off -n'
             options+=' -w 64 -h 48'
             options+=' -t 10'
             options+=' -ss '+str(self.currentss)
@@ -221,7 +221,7 @@ class timelapse:
         """
         Take a photo and save it at a specified filename.
         """
-        options='-hf -vf -awb off -n'
+        options='-awb off -n'
         options+=' -w '+str(self.w)+' -h '+str(self.h)
         options+=' -t 50'
         options+=' -ss '+str(self.currentss)
@@ -331,7 +331,7 @@ def main(argv):
     listen=False
 
     try:
-       opts, args = getopt.getopt(argv,"qLw:h:i:t:n:b:s:o:", [])
+       opts, args = getopt.getopt(argv,"qLw:h:i:t:n:b:s:o:m:", [])
     except getopt.GetoptError:
        print usagestring
        sys.exit(2)
@@ -351,7 +351,7 @@ def main(argv):
             TL.maxtime=maxtime*60
         elif opt=="-n":
             TL.maxshots=argassign(arg,'int')
-        elif opt=="-c":
+        elif opt=="-m":
             TL.metersite=argassign(arg,'str')
         elif opt=="-b":
             TL.targetBrightness=argassign(arg,'int')
