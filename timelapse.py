@@ -1,41 +1,10 @@
 #!/usr/bin/python
 
 import Image
-import os
-import sys, getopt
+import os, sys, argparse
 import subprocess
 import time
 import zmq
-
-usagestring="Usage: timelaspe.py [options]\n"
-usagestring+="Options:\n"
-usagestring+="-q      : Print this usage screen.\n"
-usagestring+="-w 1286 : Set picture width.\n"
-usagestring+="-h 972  : Set picture height.\n"
-usagestring+="-i 15   : Set photo interval in seconds.  Min recommended: 5\n"
-usagestring+="-t 60   : Set maximum duration of program in minutes.  -1 means no limit.\n"
-usagestring+="-n 5000 : Set maximum number of pictures to take.\n"
-usagestring+="-b 100  : Set target brightness of images (0-255).  Recommended value is 100.\n"
-usagestring+="-d 256  : Maximum allowed distance from target brightness.  Discards too bright/dark.\n"
-usagestring+="-m c    : Determines where to meter brightness.  (c)enter,(l)eft,(r)ight, or (a)ll.\n"
-usagestring+="        : Set -d to 256 to keep all images.\n"
-
-def argassign(arg, typ='int'):
-    """
-    A small routine for taking arguments and modifying their type to 
-    int, str, or float.
-    """
-    try:
-        if typ=='float':
-            return float(arg)
-        elif typ=='int':
-            return int(arg)
-        else:
-            return str(arg)
-    except:
-       print usagestring
-       sys.exit(2)
-    return False
 
 class timelapse:
     """
@@ -120,6 +89,11 @@ class timelapse:
         return 'A timelapse instance.'
 
     def avgbrightness(self, im):
+        """
+        Find the average brightness of the provided image according to the method
+        defined in `self.metersite`
+        """
+
         meter=self.metersite
         aa=im.convert('L')
         (h,w)=aa.size
@@ -150,6 +124,10 @@ class timelapse:
         return mu0
 
     def dynamic_adjust(self):
+        """
+        Applies a simple gradient descent to try to correct shutterspeed and
+        brightness to match the target brightness.
+        """
         delta=self.targetBrightness-self.lastbr
         Adj = lambda v: int( v*(1.0+delta*1.0/self.targetBrightness) )
         newss=self.currentss
@@ -176,6 +154,10 @@ class timelapse:
         self.currentiso=newiso
 
     def findinitialparams(self):
+        """
+        Take a number of small shots in succession to determine a shutterspeed
+        and ISO for taking photos of the desired brightness.
+        """
         killtoken=False
         while abs(self.targetBrightness-self.lastbr)>4:
             options='-awb off -n'
@@ -267,7 +249,7 @@ class timelapse:
         self.socket = self.context.socket(zmq.PUB)
         self.socket.bind("tcp://*:5556")
 
-        while (elapsed<self.maxtime or self.maxtime==0) and (self.shots_taken<self.maxshots or self.maxshots==0):
+        while (elapsed<self.maxtime or self.maxtime==-1) and (self.shots_taken<self.maxshots or self.maxshots==-1):
             loopstart=time.time()
 
             dtime=subprocess.check_output(['date', '+%y%m%d_%T']).strip()
@@ -292,6 +274,10 @@ class timelapse:
         self.socket.close()
 
     def listen(self):
+        """
+        Run the timelapser in listen mode.  Listens for ZMQ messages and shoots
+        accordingly.
+        """
         #  Socket to talk to server
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
@@ -326,39 +312,21 @@ class timelapse:
 def main(argv):
 
 
-    TL = timelapse()
+    parser = argparse.ArgumentParser(description='Timelapse tool for the Raspberry Pi.')
+    parser.add_argument( '-W', '--width', default=1286, type=int, help='Set image width.' )
+    parser.add_argument( '-H', '--height', default=972, type=int, help='Set image height.' )
+    parser.add_argument( '-i', '--interval', default=15, type=int, help='Set photo interval in seconds.  \nRecommended miniumum is 6.' )
+    parser.add_argument( '-t', '--maxtime', default=-1, type=int, help='Maximum duration of timelapse in minutes.\nDefault is -1, for no maximum duration.' )
+    parser.add_argument( '-n', '--maxshots', default=-1, type=int, help='Maximum number of photos to take.\nDefault is -1, for no maximum.' )
+    parser.add_argument( '-b', '--brightness', default=128, type=int, help='Target average brightness of image, on a scale of 1 to 255.\nDefault is 128.' )
+    parser.add_argument( '-d', '--delta', default=128, type=int, help='Maximum allowed distance of photo brightness from target brightness; discards photos too far from the target.  This is useful for autmatically discarding late-night shots.\nDefault is 128; Set to 256 to keep all images.' )
+    parser.add_argument( '-m', '--metering', default='a', type=str, choices=['a','c','l','r'], help='Where to average brightness for brightness calculations.\n"a" measures the whole image, "c" uses a window at the center, "l" meters a strip at the left, "r" uses a strip at the right.' )
+    parser.add_argument( '-L', '--listen', action='store_true', help='Sets the timelapser to listen mode; listens for a master timelapser to tell it when to shoot.' )
 
-    listen=False
+    args=parser.parse_args()
+    TL = timelapse(w=args.width, h=args.height, interval=args.interval, maxshots=args.maxshots, maxtime=args.maxtime, targetBrightness=args.brightness, maxdelta=args.delta)
 
-    try:
-       opts, args = getopt.getopt(argv,"qLw:h:i:t:n:b:s:o:m:", [])
-    except getopt.GetoptError:
-       print usagestring
-       sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-q':
-            print usagestring
-            sys.exit()
-        elif opt=="-w":
-            TL.w=argassign(arg,'int')
-        elif opt=="-h":
-            TL.h=argassign(arg,'int')
-        elif opt=="-i":
-            TL.interval=argassign(arg,'int')
-        elif opt=="-t":
-            maxtime=argassign(arg,'int')
-            TL.maxtime=maxtime*60
-        elif opt=="-n":
-            TL.maxshots=argassign(arg,'int')
-        elif opt=="-m":
-            TL.metersite=argassign(arg,'str')
-        elif opt=="-b":
-            TL.targetBrightness=argassign(arg,'int')
-        elif opt=="-L":
-            listen=True
-
-    if listen:
+    if args.listen:
         TL.listen()
     else:
         TL.timelapser()
