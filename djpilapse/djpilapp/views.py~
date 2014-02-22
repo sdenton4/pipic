@@ -27,6 +27,8 @@ def shoot(request, ss=50000, iso=100):
     """
     Take a photo and save it as new.jpg.
     """
+    ss=int(ss)
+    iso=int(iso)
     if ss<0: ss=0
     if ss>200000: ss=200000
     if iso>800: iso=800
