@@ -1,11 +1,7 @@
 # Create your views here.
 
 import subprocess
-try:
-    import Image
-except:
-    import image
-
+import Image
 from django.http import HttpResponse
 from django.template import Template, Context
 from django.template.loader import get_template

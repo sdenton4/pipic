@@ -1,9 +1,6 @@
 #!/usr/bin/python
 
-try:
-    import Image
-except:
-    import image
+import Image
 import os, sys, argparse
 import subprocess
 import time
