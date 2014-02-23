@@ -1,11 +1,8 @@
 # Create your views here.
 
-import subprocess
-try:
-    import Image
-except:
-    import image
-
+import subprocess, json
+import Image
+import time
 from django.http import HttpResponse
 from django.template import Template, Context
 from django.template.loader import get_template
@@ -51,4 +48,19 @@ def shoot(request, ss=50000, iso=100):
     location='static/new.jpg'
     return HttpResponse(location)
 
+def findinitialparams(request):
+    Q=timelapser.objects.all()[0]
+    Q.findinitialparams()
+    return HttpResponse('')
 
+def jsonupdate(request):
+    Q=timelapser.objects.all()[0]
+    jsondict={
+        'time': time.strftime('%H:%M:%S--%m-%d-%y'),
+        'ss' : Q.ss,
+        'iso' : Q.iso,
+        'boot' : Q.boot,
+        'active': Q.active,
+    }
+    J=json.dumps(jsondict)
+    return HttpResponse(J)

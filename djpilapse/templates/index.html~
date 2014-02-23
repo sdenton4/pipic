@@ -8,36 +8,68 @@
     <title>Pilapse Web Interface v0.0</title>
 
 
-    <script src="{% static "jquery.min.js" %}"></script>
+    <script src="{% static 'jquery.min.js' %}"></script>
 
     <script>
-    function loadImage(path, width, height, target) {
+    function loadImage() {
+        $('#imageFrame').fadeTo('fast', 0.5);
+        path=baseurl()+"static/new.jpg"
+        width=320;
+        height=240;
+        target='#imageFrame';
         X=$('<img src="'+ path +'">').width(width).height(height);
         $(target).html(X);
+        $('#imageFrame').fadeTo('fast', 1.0);
     }
+
+    function baseurl() {
+        path=document.URL
+        path=path.replace( "djpilapp/", "" )
+        return path
+    };
+
+    //Stack to place requests to the server on.
+    functionStack=[]
 
     $(document).ready( function(){
         //Navigation buttons.
         $('.photoButton').click(function(){
-            path=document.URL+"static/new.jpg"
-            path=path.replace( "djpilapp/", "" )
             iso=photoForm.elements['iso'].value
             ss=photoForm.elements['shutterspeed'].value*100
-            url=document.URL+'shoot/'+ss+'/'+iso+'/'
+            url=baseurl()+'djpilapp/shoot/'+ss+'/'+iso+'/'
             console.log(url)
-            waittime=ss/100+1000
+            waittime=ss/100+500
             $.ajax(url).done( function(){
-                setTimeout(function(){loadImage(path,320,240,"#imageFrame")},waittime);
+                $('#imageFrame').fadeTo('fast', 0.5);
+                setTimeout(function(){
+                    functionStack.push( loadImage );
+                },waittime);
             });
         });
         $('.refreshButton').click(function(){
-            path=document.URL+"static/new.jpg"
-            path=path.replace( "djpilapp/", "" )
-            console.log(path)
-            loadImage(path,320,240,"#imageFrame")
+            console.log(path);
+            functionStack.push( loadImage );
         });
-        $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',1)});
-        $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',.5)});
+        $('.calibrateButton').click(function(){
+            url=baseurl()+'djpilapp/findinitialparams/'
+            $.ajax(url);
+        });
+        $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',0.75)});
+        $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',1.0)});
+
+        //JSON Updates
+        setInterval(function() {
+            path=baseurl()+'djpilapp/jsonupdate/'
+            $.getJSON( path, function( data ) {
+                if (functionStack.length>0) {
+                    f=functionStack.pop();
+                    f();
+                }
+                else {
+                    $('#jsontarget').html(data['time'])
+                }
+            });
+        }, 2000);
     });
     </script>
 
@@ -53,7 +85,7 @@
     <td>
         <h2>Last picture taken:</h2>
         <span id="imageFrame">
-        <img src="{% static "new.jpg" %}" width=320 height=240>
+        <img id="lastImage" src="{% static "new.jpg" %}" width=320 height=240>
         </span>
     </td>
 
@@ -77,23 +109,24 @@
         <li> Name: {{ project.project_name }} </li>
         <li> Folder: {{ project.folder }} </li>
         <li> Interval: {{ project.interval }} </li>
-        <li> Height: {{ project.delta }} </li>
-        <li> Width: {{ project.delta }} </li>
+        <li> Height: {{ project.height }} </li>
+        <li> Width: {{ project.width }} </li>
         <li> Brightness: {{ project.brightness }} </li>
         <li> Delta: {{ project.delta }} </li>
         <li> Listen Mode: {{ project.listen }} </li>
         <li> Keep Images: {{ project.keep_images }} </li>
     </ul>
+    <li class="calibrateButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Find SS/ISO</li>
     </td>
 
     <td>
     <h3>PiLapser</h3>
     <ul>
         <li> Active: {{ pilapse.active }} </li>
-        <li> Start on boot: {{ pilapse.start_on_boot }} </li>
+        <li> Start on boot: {{ pilapse.boot }} </li>
         <li> Project: {{ pilapse.project }} </li>
-        <li> Current SS: {{ pilapse.currentss }} </li>
-        <li> Current ISO: {{ pilapse.currentiso }} </li>
+        <li> Current SS: {{ pilapse.ss }} </li>
+        <li> Current ISO: {{ pilapse.iso }} </li>
         <li> Avg Brightness: {{ pilapse.lastbr }} </li>
         <li> Shots taken: {{ pilapse.shots_taken }} </li>
         <li> Avg Brightness: {{ pilapse.lastbr }} </li>
@@ -102,5 +135,8 @@
 
     </tr>
 </table>
+
+<div id='jsontarget'>
+</div>
 
 </body>

@@ -1,5 +1,5 @@
 from django.db import models
-import os
+import os, subprocess, Image
 
 class pilapse_project(models.Model):
     #Project settings
@@ -66,6 +66,11 @@ class timelapser(models.Model):
     start_on_boot=models.BooleanField(verbose_name="Start on boot?", name='boot')
     active=models.BooleanField(verbose_name="Tracks whether currently taking photos", name='active')
     metersite='a'
+    minss=100
+    maxss=2000000
+    miniso=100
+    maxiso=800
+
 
     def __unicode__(self):
         return "Pilapser with prefix "+self.project.project_name
@@ -97,29 +102,41 @@ class timelapser(models.Model):
         """
         targetBrightness=self.project.brightness
         delta=targetBrightness-self.lastbr
-        Adj = lambda v: int( v*(1.0+delta*1.0/self.targetBrightness) )
-        newss=self.currentss
-        newiso=self.currentiso
+        Adj = lambda v: int( v*(1.0+delta*1.0/self.project.brightness) )
+        newss=self.ss
+        newiso=self.iso
         if delta<0:
             #too bright.
-            if self.currentiso>self.miniso:
+            if self.iso>self.miniso:
                 #reduce iso first if possible
-                newiso=Adj(self.currentiso)
+                newiso=Adj(self.iso)
                 newiso=max([newiso,self.miniso])
             else:
-                newss=Adj(self.currentss)
+                newss=Adj(self.ss)
                 newss=max([newss, self.minss])
         elif delta>0:
             #too dim.
-            if self.currentss<self.maxss:
+            if self.ss<self.maxss:
                 #increase ss first if possible
-                newss=Adj(self.currentss)
+                newss=Adj(self.ss)
                 newss=min([newss, self.maxss])
             else:
-                newiso=Adj(self.currentiso)
+                newiso=Adj(self.iso)
                 newiso=min([newiso,self.maxiso])
-        self.currentss=newss
-        self.currentiso=newiso
+        self.ss=newss
+        self.iso=newiso
+
+    def maxxedbrightness(self):
+        """
+        Check whether we've reached maximum SS and ISO.
+        """
+        return (self.ss==self.maxss and self.iso==self.maxiso)
+
+    def minnedbrightness(self):
+        """
+        Check whether we've reached minimum SS and ISO.
+        """
+        return (self.ss==self.minss and self.iso==self.miniso)
 
     def findinitialparams(self):
         """
@@ -127,12 +144,14 @@ class timelapser(models.Model):
         and ISO for taking photos of the desired brightness.
         """
         killtoken=False
-        while abs(self.targetBrightness-self.lastbr)>4:
+        targetBrightness=self.project.brightness
+        self.lastbr=-128
+        while abs(targetBrightness-self.lastbr)>4:
             options='-awb off -n'
             options+=' -w 64 -h 48'
             options+=' -t 10'
-            options+=' -ss '+str(self.currentss)
-            options+=' -ISO '+str(self.currentiso)
+            options+=' -ss '+str(self.ss)
+            options+=' -ISO '+str(self.iso)
             options+=' -o new.jpg'
             subprocess.call('raspistill '+options, shell=True)
             im=Image.open('new.jpg')
@@ -141,13 +160,15 @@ class timelapser(models.Model):
 
             #Dynamically adjust ss and iso.
             self.dynamic_adjust()
-            print self.currentss, self.currentiso, self.lastbr
-            if self.currentss==self.maxss and self.currentiso==self.maxiso: 
+            print self.ss, self.iso, self.lastbr
+            #We use a killtoken so that the while loop runs one extra time before
+            #deciding to quit because the max/min iso and ss have been reached.
+            if self.ss==self.maxss and self.iso==self.maxiso: 
                 if killtoken==True:
                     break
                 else:
                     killtoken=True
-            elif self.currentss==self.minss and self.currentiso==self.miniso:
+            elif self.ss==self.minss and self.iso==self.miniso:
                 if killtoken==True:
                     break
                 else:

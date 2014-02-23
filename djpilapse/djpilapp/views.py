@@ -1,7 +1,8 @@
 # Create your views here.
 
-import subprocess
+import subprocess, json
 import Image
+import time
 from django.http import HttpResponse
 from django.template import Template, Context
 from django.template.loader import get_template
@@ -14,6 +15,17 @@ staticdir='static/'
 
 def index(request):
     t=get_template('index.html')
+    P=pilapse_project.objects.all()[0]
+    Q=timelapser.objects.all()[0]
+    c=Context({
+        'project': P,
+        'pilapse': Q,
+    })
+    html=t.render(c)
+    return HttpResponse(html)
+
+def jstest(request):
+    t=get_template('jstest.html')
     P=pilapse_project.objects.all()[0]
     Q=timelapser.objects.all()[0]
     c=Context({
@@ -47,4 +59,19 @@ def shoot(request, ss=50000, iso=100):
     location='static/new.jpg'
     return HttpResponse(location)
 
+def findinitialparams(request):
+    Q=timelapser.objects.all()[0]
+    Q.findinitialparams()
+    return HttpResponse('')
 
+def jsonupdate(request):
+    Q=timelapser.objects.all()[0]
+    jsondict={
+        'time': time.strftime('%H:%M:%S--%m-%d-%y'),
+        'ss' : Q.ss,
+        'iso' : Q.iso,
+        'boot' : Q.boot,
+        'active': Q.active,
+    }
+    J=json.dumps(jsondict)
+    return HttpResponse(J)
