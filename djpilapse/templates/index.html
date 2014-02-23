@@ -11,100 +11,101 @@
     <link href="{% static 'css/pilapse.css' %}" rel="stylesheet">
         
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="{% static '/js/jquery-1.11.0.min.js' %}"></script>
-    <script src="{% static '/js/pilapse.js' %}"></script>    
-    
-    <script>
-    function loadImage(path, width, height, target) {
-        X=$('<img src="'+ path +'">').width(width).height(height);
-        $(target).html(X);
-    }
-
-    $(document).ready( function(){
-        //Navigation buttons.
-        $('.photoButton').click(function(){
-            path=document.URL+"static/new.jpg"
-            path=path.replace( "djpilapp/", "" )
-            iso=photoForm.elements['iso'].value
-            ss=photoForm.elements['shutterspeed'].value*100
-            url=document.URL+'shoot/'+ss+'/'+iso+'/'
-            console.log(url)
-            waittime=ss/100+1000
-            $.ajax(url).done( function(){
-                setTimeout(function(){loadImage(path,320,240,"#imageFrame")},waittime);
-            });
-        });
-        $('.refreshButton').click(function(){
-            path=document.URL+"static/new.jpg"
-            path=path.replace( "djpilapp/", "" )
-            console.log(path)
-            loadImage(path,320,240,"#imageFrame")
-        });
-        $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',1)});
-        $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',.5)});
-    });
-    </script>
+    <script src="{% static 'js/jquery-1.11.0.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/pilapse.js' %}"></script>    
 
 </head>
 
 <body>
+<nav class="navbar navbar-default" role="navigation">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">PiLapse</a>
+    </div>
 
-<h1>PiLapse Web Interface v0.0</h1>
-
-<table>
-
-    <tr>
-    <td>
-        <h2>Last picture taken:</h2>
-        <span id="imageFrame">
-        <img src="{% static "new.jpg" %}" width=320 height=240>
-        </span>
-    </td>
-
-    <td>
-        <form id="photoForm">
-        Shutter speed: <input type="number" name="shutterspeed" value=500><br>
-        ISO:    <input type="number" name="iso" value=100><br>
+      <ul class="nav navbar-nav navbar-right">
+        <li><button type="button" href="#" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">Project Select <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+            <li><a href="#">Project 1</a></li>
+            <li><a href="#">Project 2</a></li>
+        </ul>
+        </li>
+        <li><button type="button" href="#" class="btn btn-success navbar-btn" >+ New Project</button></li>
+        
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+<div class="container-fluid">
+    <div class="row">
+      <div id="imageFrame" class="col-md-offset-2 col-md-6">
+      
+          <img  id="lastImage" src="{% static 'new.jpg' %}" class="img-responsive">
+      </div>
+      <div class="col-md-offset-1 col-md-2 sidebar">
+        <ul class="nav nav-sidebar">
+        <h3>PiLapse Project</h3>
+        
+            <li> Name: {{ project.project_name }} </li>
+            <li> Folder: {{ project.folder }} </li>
+            <li> Interval: {{ project.interval }} </li>
+            <li> Height: {{ project.height }} </li>
+            <li> Width: {{ project.width }} </li>
+            <li> Brightness: {{ project.brightness }} </li>
+            <li> Delta: {{ project.delta }} </li>
+            <li> Listen Mode: {{ project.listen }} </li>
+            <li> Keep Images: {{ project.keep_images }} </li>
+        </ul>
+        <h3>PiLapser</h3>
+        <ul class="nav nav-sidebar">
+            <li> Active: {{ pilapse.active }} </li>
+            <li> Start on boot: {{ pilapse.start_on_boot }} </li>
+            <li> Project: {{ pilapse.project }} </li>
+            <li> Current SS: {{ pilapse.ss }} </li>
+            <li> Current ISO: {{ pilapse.iso }} </li>
+            <li> Avg Brightness: {{ pilapse.lastbr }} </li>
+            <li> Shots taken: {{ pilapse.shots_taken }} </li>
+            <li> Avg Brightness: {{ pilapse.lastbr }} </li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-offset-2 col-md-6">
+        <form id="photoForm" class="form-inline" role="form">
+          <div class="form-group">
+            <label for="">Shutter Speed</label>
+            <input type="number" name="shutterspeed" class="form-control"  value=500>
+          </div>
+          <div class="form-group">
+            <label for="">ISO</label>
+            <input type="number" name="iso" class="form-control" value=200 >
+          </div>
         </form>
+      </div>
+      <div class="row">
+        <div class="col-md-offset-2 col-md-6">
+          <button type="button" class="photoButton navbutton btn btn-primary">Take Picture</button>
+          <button type="button" class="refreshButton navbutton btn btn-primary">Refresh Image</button>
+         <!--<nav style="display:block; margin:auto;">
+            <ol style="list-style-type:none;">
+            <li class="photoButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Take a picture!</li>
+            <li class="refreshButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Refresh Image</li>
+            </ol>
+            </nav>-->
+        </div>
+      </div>
 
-        <nav style="display:block; margin:auto;">
-        <ol style="list-style-type:none;">
-        <li class="photoButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Take a picture!</li>
-        <li class="refreshButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Refresh Image</li>
-        </ol>
-        </nav>
-    </td>
+        
 
-    <td>
-    <h3>PiLapse Project</h3>
-    <ul>
-        <li> Name: {{ project.project_name }} </li>
-        <li> Folder: {{ project.folder }} </li>
-        <li> Interval: {{ project.interval }} </li>
-        <li> Height: {{ project.height }} </li>
-        <li> Width: {{ project.width }} </li>
-        <li> Brightness: {{ project.brightness }} </li>
-        <li> Delta: {{ project.delta }} </li>
-        <li> Listen Mode: {{ project.listen }} </li>
-        <li> Keep Images: {{ project.keep_images }} </li>
-    </ul>
-    </td>
-
-    <td>
-    <h3>PiLapser</h3>
-    <ul>
-        <li> Active: {{ pilapse.active }} </li>
-        <li> Start on boot: {{ pilapse.start_on_boot }} </li>
-        <li> Project: {{ pilapse.project }} </li>
-        <li> Current SS: {{ pilapse.currentss }} </li>
-        <li> Current ISO: {{ pilapse.currentiso }} </li>
-        <li> Avg Brightness: {{ pilapse.lastbr }} </li>
-        <li> Shots taken: {{ pilapse.shots_taken }} </li>
-        <li> Avg Brightness: {{ pilapse.lastbr }} </li>
-    </ul>
-    </td>
-
-    </tr>
-</table>
-
+        
+    </div>
+  </div>
 </body>

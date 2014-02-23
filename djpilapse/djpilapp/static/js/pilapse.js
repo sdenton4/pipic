@@ -1,28 +1,60 @@
-function loadImage(path, width, height, target) {
-        X=$('<img src="'+ path +'">').width(width).height(height);
+    function loadImage() {
+        $('#imageFrame').fadeTo('fast', 0.5);
+        path=baseurl()+"static/new.jpg"
+        //width=320;
+        //height=240;
+        target='#imageFrame';
+        X=$('<img src="'+ path +'">')//.width(width).height(height);
         $(target).html(X);
+        $('#imageFrame').fadeTo('fast', 1.0);
     }
+
+    function baseurl() {
+        path=document.URL
+        path=path.replace( "djpilapp/", "" )
+        return path
+    };
+
+    //Stack to place requests to the server on.
+    functionStack=[]
 
     $(document).ready( function(){
         //Navigation buttons.
         $('.photoButton').click(function(){
-            path=document.URL+"static/new.jpg"
-            path=path.replace( "djpilapp/", "" )
             iso=photoForm.elements['iso'].value
             ss=photoForm.elements['shutterspeed'].value*100
-            url=document.URL+'shoot/'+ss+'/'+iso+'/'
+            url=baseurl()+'djpilapp/shoot/'+ss+'/'+iso+'/'
             console.log(url)
-            waittime=ss/100+1000
+            waittime=ss/100+500
             $.ajax(url).done( function(){
-                setTimeout(function(){loadImage(path,320,240,"#imageFrame")},waittime);
+                $('#imageFrame').fadeTo('fast', 0.5);
+                setTimeout(function(){
+                    functionStack.push( loadImage );
+                },waittime);
             });
         });
         $('.refreshButton').click(function(){
-            path=document.URL+"static/new.jpg"
-            path=path.replace( "djpilapp/", "" )
-            console.log(path)
-            loadImage(path,320,240,"#imageFrame")
+            console.log(path);
+            functionStack.push( loadImage );
         });
-        $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',1)});
-        $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',.5)});
+        $('.calibrateButton').click(function(){
+            url=baseurl()+'djpilapp/findinitialparams/'
+            $.ajax(url);
+        });
+        $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',0.75)});
+        $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',1.0)});
+
+        //JSON Updates
+        setInterval(function() {
+            path=baseurl()+'djpilapp/jsonupdate/'
+            $.getJSON( path, function( data ) {
+                if (functionStack.length>0) {
+                    f=functionStack.pop();
+                    f();
+                }
+                else {
+                    $('#jsontarget').html(data['time'])
+                }
+            });
+        }, 2000);
     });
