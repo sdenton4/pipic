@@ -8,6 +8,16 @@
         $(target).html(X);
         $('#imageFrame').fadeTo('fast', 1.0);
     }
+    
+    function updateArticle(t){
+      path = baseurl()+ 'djpilapp/' + t +'/';
+      console.log(path);
+      $.get(path, function(data){
+        $('article').html( data );
+      });
+      ;
+    }
+    
 
     function baseurl() {
         path=document.URL
@@ -34,9 +44,13 @@
             });
         });
         $('.refreshButton').click(function(){
-            console.log(path);
             functionStack.push( loadImage );
         });
+        $('#newProjectButton').click(function(){
+            functionStack.push( updateArticle('newProject') );
+        });
+        
+        
         $('.calibrateButton').click(function(){
             url=baseurl()+'djpilapp/findinitialparams/'
             $.ajax(url);
@@ -44,17 +58,18 @@
         $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',0.75)});
         $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',1.0)});
 
-        //JSON Updates
+        //Page Updates
         setInterval(function() {
-            path=baseurl()+'djpilapp/jsonupdate/'
-            $.getJSON( path, function( data ) {
-                if (functionStack.length>0) {
-                    f=functionStack.pop();
-                    f();
-                }
-                else {
-                    $('#jsontarget').html(data['time'])
-                }
-            });
+            if (functionStack.length>0) {
+                f=functionStack.pop();
+                f();
+                console.log('f');
+            }
+            else {
+                path=baseurl()+'djpilapp/jsonupdate/';
+                $.getJSON( path, function( data ) {
+                $('#jsontarget').html(data['time']);
+              }
+            )};
         }, 2000);
     });
