@@ -50,6 +50,10 @@
             functionStack.push( updateArticle('newProject') );
         });
         
+        $('#homeButton').click(function(){
+            functionStack.push( updateArticle('overview') );
+        });
+        
         
         $('.calibrateButton').click(function(){
             url=baseurl()+'djpilapp/findinitialparams/'
