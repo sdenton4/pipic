@@ -47,6 +47,7 @@
             functionStack.push( loadImage );
         });
         $('#newProjectButton').click(function(){
+            event.preventDefault();
             functionStack.push( updateArticle('newProject') );
         });
         
