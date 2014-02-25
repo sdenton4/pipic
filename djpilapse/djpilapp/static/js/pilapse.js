@@ -9,8 +9,8 @@
         $('#imageFrame').fadeTo('fast', 1.0);
     }
     
-    function updateArticle(t){
-      path = baseurl()+ 'djpilapp/' + t +'/';
+    function updateArticle(page){
+      path = baseurl()+ 'djpilapp/' + page +'/';
       console.log(path);
       $.get(path, function(data){
         $('article').html( data );
