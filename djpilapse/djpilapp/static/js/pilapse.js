@@ -66,9 +66,7 @@
         //Page Updates
         setInterval(function() {
             if (functionStack.length>0) {
-                f=functionStack.pop();
-                f();
-                console.log('f');
+                f = functionStack.pop();
             }
             else {
                 path=baseurl()+'djpilapp/jsonupdate/';
