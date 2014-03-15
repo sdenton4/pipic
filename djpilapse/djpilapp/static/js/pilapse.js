@@ -39,7 +39,7 @@
             $.ajax(url).done( function(){
                 $('#imageFrame').fadeTo('fast', 0.5);
                 setTimeout(function(){
-                    functionStack.push( loadImage );
+                    functionStack.push( [ loadImage, [] ] );
                 },waittime);
             });
         });
