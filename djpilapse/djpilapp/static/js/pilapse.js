@@ -1,8 +1,8 @@
     function loadImage() {
         $('#imageFrame').fadeTo('fast', 0.5);
         path=baseurl()+"static/new.jpg"
-        width=320;
-        height=240;
+        width=640;
+        height=480;
         target='#imageFrame';
         X=$('<img src="'+ path +'">').width(width).height(height);
         console.log(path);
@@ -16,7 +16,6 @@
       $.get(path, function(data){
         $('article').html( data );
       });
-      ;
     }
 
     function baseurl() {
@@ -45,15 +44,16 @@
             });
         });
         $('.refreshButton').click(function(){
-            functionStack.push( loadImage );
+            console.log('refresh button pushed.')
+            functionStack.push( [ loadImage, [] ] );
         });
         $('#newProjectButton').click(function(){
             event.preventDefault();
-            functionStack.push( updateArticle('newProject') );
+            functionStack.push( [ updateArticle, ['newProject'] ] );
         });
 
         $('#homeButton').click(function(){
-            functionStack.push( updateArticle('overview') );
+            functionStack.push( [ updateArticle, ['overview']] );
         });
 
         $('.calibrateButton').click(function(){
@@ -66,7 +66,9 @@
         //Page Updates
         setInterval(function() {
             if (functionStack.length>0) {
-                f = functionStack.pop();
+                F = functionStack.pop();
+                F[0].apply(this, F[1]);
+                console.log('Function popped:');
             }
             else {
                 path=baseurl()+'djpilapp/jsonupdate/';
