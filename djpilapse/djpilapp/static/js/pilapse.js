@@ -1,14 +1,15 @@
     function loadImage() {
         $('#imageFrame').fadeTo('fast', 0.5);
         path=baseurl()+"static/new.jpg"
-        //width=320;
-        //height=240;
+        width=320;
+        height=240;
         target='#imageFrame';
-        X=$('<img src="'+ path +'">')//.width(width).height(height);
+        X=$('<img src="'+ path +'">').width(width).height(height);
+        console.log(path);
         $(target).html(X);
         $('#imageFrame').fadeTo('fast', 1.0);
     }
-    
+
     function updateArticle(page){
       path = baseurl()+ 'djpilapp/' + page +'/';
       console.log(path);
@@ -17,11 +18,11 @@
       });
       ;
     }
-    
 
     function baseurl() {
         path=document.URL
         path=path.replace( "djpilapp/", "" )
+        path=path.replace( "#", "" )
         return path
     };
 
@@ -50,12 +51,11 @@
             event.preventDefault();
             functionStack.push( updateArticle('newProject') );
         });
-        
+
         $('#homeButton').click(function(){
             functionStack.push( updateArticle('overview') );
         });
-        
-        
+
         $('.calibrateButton').click(function(){
             url=baseurl()+'djpilapp/findinitialparams/'
             $.ajax(url);

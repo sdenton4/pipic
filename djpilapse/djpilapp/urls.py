@@ -8,4 +8,5 @@ urlpatterns = patterns('',
     url('^newProject/$', views.newProject, name='newProject'),
     url('^overview/$', views.overview, name='overview'),
     url('^findinitialparams/$', views.findinitialparams, name='findinitialparams'),
+    url('^jsonupdate/$', views.jsonupdate, name='jsonupdate'),
 )
