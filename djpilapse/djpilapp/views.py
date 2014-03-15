@@ -20,7 +20,7 @@ def index(request):
     c=Context({
         'project': P,
         'pilapse': Q,
-    })    
+    })
     body=s.render(c)
     t=get_template('index.html')
     d=Context({
@@ -46,8 +46,7 @@ def newProject(request):
     })    
     body=s.render(c)
     return HttpResponse(body)
-    
-        
+
 def shoot(request, ss=50000, iso=100):
     """
     Take a photo and save it as new.jpg.
