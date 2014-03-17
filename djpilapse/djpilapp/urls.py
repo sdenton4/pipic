@@ -9,4 +9,5 @@ urlpatterns = patterns('',
     url('^overview/$', views.overview, name='overview'),
     url('^findinitialparams/$', views.findinitialparams, name='findinitialparams'),
     url('^jsonupdate/$', views.jsonupdate, name='jsonupdate'),
+    url('^newProjectSubmit/$', views.newProjectSubmit, name='newProjectSubmit'),
 )

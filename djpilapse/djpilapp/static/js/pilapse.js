@@ -63,6 +63,26 @@
         $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',0.75)});
         $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',1.0)});
 
+        $('#newProjectForm').submit(function(event){
+
+            alert("pgifucker.");
+            event.preventDefault();
+            url=baseurl()+'djpilapp/newProjectSubmit/'
+            jsondata=$('#newProjectSubmit').serializeArray();
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: jsondata,
+                dataType: "json"
+            });
+
+        });
+
+        $('#newProjectSubmit').click(function(){
+            event.preventDefault();
+        });
+
+
         //Page Updates
         setInterval(function() {
             if (functionStack.length>0) {
