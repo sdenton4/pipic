@@ -29,23 +29,6 @@ def index(request):
     html=t.render(d)
     return HttpResponse(html)
 
-def overview(request):
-    s=get_template('overview.html')
-    P=pilapse_project.objects.all()[0]
-    Q=timelapser.objects.all()[0]
-    c=Context({
-        'project': P,
-        'pilapse': Q,
-    })    
-    body=s.render(c)
-    return HttpResponse(body)
-
-def newProject(request):
-    s=get_template('newProject.html')
-    c=Context({
-    })    
-    body=s.render(c)
-    return HttpResponse(body)
 
 def shoot(request, ss=50000, iso=100):
     """
