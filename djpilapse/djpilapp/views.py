@@ -14,19 +14,14 @@ basedir='/home/pi/pipic/djpilapse/djpilapp/'
 staticdir='static/'
 
 def index(request):
-    s=get_template('overview.html')
+    s=get_template('index.html')
     P=pilapse_project.objects.all()[0]
     Q=timelapser.objects.all()[0]
     c=Context({
         'project': P,
         'pilapse': Q,
     })    
-    body=s.render(c)
-    t=get_template('index.html')
-    d=Context({
-        'body' : body,
-    })
-    html=t.render(d)
+    html=s.render(c)
     return HttpResponse(html)
 
 

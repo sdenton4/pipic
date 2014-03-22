@@ -50,13 +50,13 @@
         
         $('#overviewBtn').click(function(){
             event.preventDefault();
-            $('#newProject').hide('slow');
-            $('#overview').show('slow');
+            $('#newProject').hide();
+            $('#overview').show();
         });
         $('#newProjectBtn').click(function(){
             event.preventDefault();
-            $('#overview').hide('slow');
-            $('#newProject').show('slow');
+            $('#overview').hide();
+            $('#newProject').show();
         });
         
         
