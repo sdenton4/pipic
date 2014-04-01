@@ -1,3 +1,11 @@
+    function formvalues(formid){
+        var values = {};
+        $.each($(formid).serializeArray(), function(i, field) {
+            values[field.name] = field.value;
+        });
+        return values
+    }
+
     function loadImage() {
         $('#imageFrame').fadeTo('fast', 0.5);
         path=baseurl()+"static/new.jpg"
@@ -8,7 +16,7 @@
         $(target).html(X);
         $('#imageFrame').fadeTo('fast', 1.0);
     }
-    
+
     function updateArticle(page){
       path = baseurl()+ 'djpilapp/' + page +'/';
       console.log(path);
@@ -17,11 +25,11 @@
       });
       ;
     }
-    
 
     function baseurl() {
         path=document.URL
         path=path.replace( "djpilapp/", "" )
+        path=path.replace( "#", "" )
         return path
     };
 
@@ -31,8 +39,9 @@
     $(document).ready( function(){
         //Navigation buttons.
         $('.photoButton').click(function(){
-            iso=photoForm.elements['iso'].value
-            ss=photoForm.elements['shutterspeed'].value*100
+            vals=formvalues('#photoForm')
+            iso=vals['iso']
+            ss=vals['shutterspeed']*100
             url=baseurl()+'djpilapp/shoot/'+ss+'/'+iso+'/'
             console.log(url)
             waittime=ss/100+500
