@@ -77,6 +77,21 @@ class timelapser(models.Model):
     def time_elapsed(self):
         return self.shots_taken*self.project.interval
 
+    def set_active(self, state=True):
+        """
+        Set the camera's `active` variable.  Used to claim the resource.
+        """
+        self.active=state
+        self.save()
+
+    def set_start_on_boot(self, state=True):
+        """
+        Configure the pi to start shooting on boot.
+        TODO: make this actually do things.
+        """
+        self.start_on_boot=state
+        self.save()
+
     def avgbrightness(self, im):
         """
         Find the average brightness of the provided image according to the method
@@ -142,6 +157,9 @@ class timelapser(models.Model):
         Take a number of small shots in succession to determine a shutterspeed
         and ISO for taking photos of the desired brightness.
         """
+        if self.active:
+            return False
+        self.set_active(True)
         killtoken=False
         targetBrightness=self.project.brightness
         self.lastbr=-128
@@ -173,5 +191,8 @@ class timelapser(models.Model):
                 else:
                     killtoken=True
         self.save_base()
+        self.set_active(False)
         return True
+
+
 
