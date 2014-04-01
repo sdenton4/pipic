@@ -40,4 +40,4 @@ nosetests.xml
 
 # local specific Django files
 
-settings.py
+**/settings
