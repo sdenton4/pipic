@@ -1,1 +1,3 @@
-screen fbi python-imaging python-zmq python-numpy imagemagick mplayer ipython
+screen python-imaging python-django imagemagick git
+
+fbi python-zmq python-numpy imagemagick mplayer ipython
