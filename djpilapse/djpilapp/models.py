@@ -5,7 +5,7 @@ class pilapse_project(models.Model):
     #Project settings
     project_name = models.CharField(max_length=200)
     folder = models.CharField(max_length=200)
-    keep_images=models.BooleanField(verbose_name="Keep images?", name='Keep images')
+    keep_images=models.BooleanField(verbose_name="Keep images?", name='keep_images')
 
     #Timelapser settings
     brightness = models.IntegerField(verbose_name="Target brightness", name='brightness')
@@ -49,6 +49,7 @@ class pilapse_project(models.Model):
             valid['folder']=False
         return valid
 
+    
 
 
 class timelapser(models.Model):

@@ -7,23 +7,35 @@ from django.http import HttpResponse
 from django.template import Template, Context
 from django.template.loader import get_template
 from django.utils import simplejson
+from django import forms
+
+from django.forms.extras.widgets import SelectDateWidget
 
 from djpilapp.models import *
+from djpilapp.forms import *
 
 basedir='/home/pi/pipic/djpilapse/djpilapp/'
 staticdir='static/'
 
+
 def index(request):
-    s=get_template('index.html')
-    P=pilapse_project.objects.all()[0]
-    Q=timelapser.objects.all()[0]
+    s = get_template('index.html')
+    try:    
+        P = pilapse_project.objects.all()[0]
+    except:
+        pass #to do: create an entry in the database
+    try:
+        Q = timelapser.objects.all()[0]
+    except:
+        pass #to do: create an entry in the database
+    R = pilapse_project.objects.all()
     c=Context({
         'project': P,
         'pilapse': Q,
+        'project_list': R,
     })    
     html=s.render(c)
     return HttpResponse(html)
-
 
 def shoot(request, ss=50000, iso=100):
     """
@@ -48,11 +60,38 @@ def shoot(request, ss=50000, iso=100):
     #im.save(filename)
     location='static/new.jpg'
     return HttpResponse(location)
+    
+    
+def newProjectSubmit(request):
+    print request.body
+    
+    params = json.loads( request.body )
+    print params
+    
+    Q=pilapse_project(
+        project_name = str(params["projectName"]),
+        folder = str(params["folder"]),
+        keep_images = bool(params["keepImages"]),
+
+        #Timelapser settings
+        brightness = int(params["brightness"]),
+        interval = int(params["interval"]),
+        width =  int(params["width"]),
+        height = int(params["height"]),
+        maxtime= int(params["maxTime"]),
+        maxshots = int(params["maxShots"]),
+        delta = int(params["width"]),
+        listen = int(params["listen"]),
+    )
+    Q.save()
+
+    return HttpResponse('cool!')
 
 def findinitialparams(request):
     Q=timelapser.objects.all()[0]
     Q.findinitialparams()
     return HttpResponse('')
+    
 
 def jsonupdate(request):
     Q=timelapser.objects.all()[0]
@@ -66,7 +105,4 @@ def jsonupdate(request):
     J=json.dumps(jsondict)
     return HttpResponse(J)
 
-def newProjectSubmit(request):
-    jdict=json.dumps( request.body )
-    print jdict
 

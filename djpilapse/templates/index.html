@@ -13,8 +13,8 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="{% static 'js/jquery-1.11.0.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
-    <script src="{% static 'js/pilapse.js' %}"></script>   
-    
+    <script src="{% static 'js/jquery.serialize-object.min.js' %}"></script>   
+    <script src="{% static 'js/pilapse.js' %}"></script>
     
 </head>
 
@@ -35,20 +35,14 @@
     </div>
 
       <ul class="nav navbar-nav navbar-right">
-        <li><button type="button" href="#" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">Project Select <span class="caret"></span></button>
-        <ul class="dropdown-menu">
-            <li><a href="#">Project 1</a></li>
-            <li><a href="#">Project 2</a></li>
-            <li id="jsonTarget">Project 2</li>
-        </ul>
+        <li><button type="button" id="rvwProjectBtn" class="btn btn-default navbar-btn" href="rvwProjects"">Review Projects </button>
         </li>
         <li><button type="button" id="newProjectBtn" class="btn btn-success navbar-btn" href="newProject">+ New Project</button></li>
-        
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
 </nav>
-<article id="overview">
+<article id="overview" style="display:none">
   <!-- start overview content -->
   <div class="container-fluid" >
     <div class="row">
@@ -117,32 +111,52 @@
     </div>
   </div>
   </article>
+  <!--start rvwProject content-->
+  <article id="rvwProjects" style="display: none">
+    <div class="container-fluid" >
+        <div class="row">
+          <div id="rvwImageFrame" class="col-md-offset-2 col-md-4">
+                <img  id="lastImage" src="http://i.imgur.com/SltaKer.jpg" class="img-responsive">
+          </div>
+          <div class="col-md-offset-2 col-md-2">
+              <button type="button" href="#" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">Project Select <span class="caret"></span></button>
+            <ul class="dropdown-menu" id="projList">
+                {% for project in project_list %}
+                    <li><a href="{{ project.folder }}">{{ project.project_name }}</a></li>
+                {% endfor %}
+            </ul>
+          </div>
+        </div>
+    </div>
+  </article>
+  
   <!--start newProject content-->
-  <article id="newProject" style="display: none">
+  <article id="newProject" style="display: ">
   <div class="container-fluid">
     <div class="row">
-      <div id="imageFrame" class="col-md-4">
+      <div id="imageFrame" class="col-md-offset-2 col-md-4">
         <h3>NEW PROJECT SETTINGS</h3>
-
+    
 
           <form class="form-horizontal" role="form" id="newProjectForm">
-            <div class="form-group">
+            <div class="form-group">    
               <label for="projectName" class="col-sm-2 control-label">Project name:</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="projectName" placeholder="Project Name">
+                <input type="text" class="form-control" name="projectName" placeholder="Project Name" value="testName">
               </div>
             </div>
             <div class="form-group">
               <label for="Folder" class="col-sm-2 control-label">Folder:</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="folder" placeholder="Folder">
+                <input type="text" class="form-control" name="folder" placeholder="Folder" value="testFolder">
               </div>
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
                 <div class="checkbox">
                   <label>
-                    <input type="checkbox" name="keepImages">Keep images?
+                    <input type="checkbox" name="keepImages" value="0" style="display:none" checked>
+                    <input type="checkbox" name="keepImages" value="1" >Keep images?
                   </label>
                 </div>
               </div>
@@ -150,44 +164,45 @@
             <div class="form-group">
               <label for="Brightness" class="col-sm-2 control-label">Brightness</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="brightness" placeholder="Brightness">
+                <input type="text" class="form-control" name="brightness" placeholder="Brightness" value="128">
               </div>
             </div>
             <div class="form-group">
               <label for="Interval" class="col-sm-2 control-label">Interval</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="interval" placeholder="Inverval in Seconds">
+                <input type="text" class="form-control" name="interval" placeholder="Inverval in Seconds" value="10">
               </div>
             </div>
             <div class="form-group">
               <label for="width" class="col-sm-2 control-label">Width</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="width" placeholder="640">
+                <input type="text" class="form-control" name="width" placeholder="640" value="640">
               </div>
             </div>
             <div class="form-group">
               <label for="height" class="col-sm-2 control-label">Height</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="height" placeholder="480">
+                <input type="text" class="form-control" name="height" placeholder="480" value="480">
               </div>
             </div>
             <div class="form-group">
               <label for="maxTime" class="col-sm-2 control-label">Maximum Time</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="maxTime" placeholder="Maximum time in minutes">
+                <input type="text" class="form-control" name="maxTime" placeholder="Maximum time in minutes" value="-1">
               </div>
             </div>
             <div class="form-group">
               <label for="maxShots" class="col-sm-2 control-label">Maximum Shots</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="maxShots" placeholder="Maximum Shots">
+                <input type="text" class="form-control" name="maxShots" placeholder="Maximum Shots"  value="-1">
               </div>
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
                 <div class="checkbox">
                   <label>
-                    <input type="checkbox" name="listen">Listen mode?
+                    <input type="checkbox" name="listen" value="0" style="display:none" checked>
+                    <input type="checkbox" name="listen" value="1" >Listen mode?
                   </label>
                 </div>
               </div>
@@ -205,32 +220,7 @@
         <h1>NEW PROJECT</h1>
           <img  id="lastImage" src="http://i.imgur.com/2P8AYmw.jpg" class="img-responsive">
       </div>
-      <div class="col-md-4 sidebar">
-        <ul class="nav nav-sidebar">
-        <h3>PiLapse Project</h3>
-        
-            <li> Name: {{ project.project_name }} </li>
-            <li> Folder: {{ project.folder }} </li>
-            <li> Interval: {{ project.interval }} </li>
-            <li> Height: {{ project.height }} </li>
-            <li> Width: {{ project.width }} </li>
-            <li> Brightness: {{ project.brightness }} </li>
-            <li> Delta: {{ project.delta }} </li>
-            <li> Listen Mode: {{ project.listen }} </li>
-            <li> Keep Images: {{ project.keep_images }} </li>
-        </ul>
-        <h3>PiLapser</h3>
-        <ul class="nav nav-sidebar">
-            <li> Active: {{ pilapse.active }} </li>
-            <li> Start on boot: {{ pilapse.start_on_boot }} </li>
-            <li> Project: {{ pilapse.project }} </li>
-            <li> Current SS: {{ pilapse.ss }} </li>
-            <li> Current ISO: {{ pilapse.iso }} </li>
-            <li> Avg Brightness: {{ pilapse.lastbr }} </li>
-            <li> Shots taken: {{ pilapse.shots_taken }} </li>
-            <li> Avg Brightness: {{ pilapse.lastbr }} </li>
-        </ul>
-      </div>
+      
     </div>    
       
     </div class="row">  

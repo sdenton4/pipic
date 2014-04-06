@@ -7,5 +7,6 @@ urlpatterns = patterns('',
     url('^shoot/(\d+)/(\d+)/$', views.shoot, name='shoot'),
     url('^findinitialparams/$', views.findinitialparams, name='findinitialparams'),
     url('^jsonupdate/$', views.jsonupdate, name='jsonupdate'),
-    url('^newProjectSubmit/$', views.newProjectSubmit, name='newProjectSubmit'),
+    url('^newProject/$', views.newProjectSubmit, name='newProjectSubmit'),
+    ## add URL for newProject view
 )
