@@ -84,8 +84,7 @@ def newProjectSubmit(request):
         listen = int(params["listen"]),
     )
     Q.save()
-
-    return HttpResponse('cool!')
+    return HttpResponse(Q.project_name)
 
 def findinitialparams(request):
     Q=timelapser.objects.all()[0]

@@ -74,7 +74,8 @@
                 url: baseurl()+'djpilapp/newProject/',
                 data: settings,
                 success: function(data){
-                    $('#newProjectSubmit').text(data);
+                    $('#newPName').text(data);
+                    $('#newProjectAlert').show('slow');
                 }
 
             });
