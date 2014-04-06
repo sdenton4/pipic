@@ -18,12 +18,12 @@
     }
 
     function updateArticle(page){
+    //This is cruft now.  Delete this function.
       path = baseurl()+ 'djpilapp/' + page +'/';
       console.log(path);
       $.get(path, function(data){
         $('article').html( data );
       });
-      ;
     }
 
     function baseurl() {
@@ -124,8 +124,7 @@
             if (functionStack.length>0) {
                 f = functionStack.pop();
                 //console.log(f);
-                //f();
-                
+                f();
             }
             else {
                 path=baseurl()+'djpilapp/jsonupdate/';
