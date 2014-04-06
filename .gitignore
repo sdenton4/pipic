@@ -41,3 +41,6 @@ nosetests.xml
 # local specific Django files
 
 **/settings
+**/djpilapse.db
+
+
