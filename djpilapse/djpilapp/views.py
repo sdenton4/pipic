@@ -12,7 +12,7 @@ from django import forms
 from django.forms.extras.widgets import SelectDateWidget
 
 from djpilapp.models import *
-from djpilapp.forms import *
+
 
 basedir='/home/pi/pipic/djpilapse/djpilapp/'
 staticdir='static/'
