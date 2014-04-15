@@ -26,14 +26,19 @@ app.conf.update(
 """
 app.conf.update(
     CELERY_RESULT_BACKEND='djcelery.backends.cache:CacheBackend',
-    CELERYBEAT_SCHEDULE = {
-    'add-every-6-seconds': {
-        'task': 'tasks.add',
-        'schedule': timedelta(seconds=6),
-        'args': (16, 16),
-    }},
+    CELERYBEAT_SCHEDULER='djcelery.schedulers.DatabaseScheduler',
     CELERY_TIMEZONE = 'UTC',
 )
+
+"""
+CELERYBEAT_SCHEDULE = {
+'add-every-6-seconds': {
+    'task': 'tasks.add',
+    'schedule': timedelta(seconds=6),
+    'args': (16, 16),
+}
+},
+"""
 
 # Optional configuration, see the application user guide.
 app.conf.update(
@@ -43,9 +48,6 @@ app.conf.update(
 @app.task(bind=True)
 def debug_task(self):
     print('Request: {0!r}'.format(self.request))
-
-CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
-
 
 
 
