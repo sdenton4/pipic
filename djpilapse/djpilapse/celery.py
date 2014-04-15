@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 
 from celery import Celery
+from datetime import timedelta
 
 from django.conf import settings
 
@@ -25,6 +26,13 @@ app.conf.update(
 """
 app.conf.update(
     CELERY_RESULT_BACKEND='djcelery.backends.cache:CacheBackend',
+    CELERYBEAT_SCHEDULE = {
+    'add-every-6-seconds': {
+        'task': 'tasks.add',
+        'schedule': timedelta(seconds=6),
+        'args': (16, 16),
+    }},
+    CELERY_TIMEZONE = 'UTC',
 )
 
 # Optional configuration, see the application user guide.
@@ -35,6 +43,11 @@ app.conf.update(
 @app.task(bind=True)
 def debug_task(self):
     print('Request: {0!r}'.format(self.request))
+
+CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
+
+
+
 
 if __name__ == '__main__':
     app.start()

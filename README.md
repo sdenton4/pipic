@@ -23,7 +23,10 @@ loadOut.py:
 --------------------------------------------------------------
 
 We're also working on building a Django server for managing all your timelapse needs.
-Here's a list of prerequisites to install on your pi for use with the django interface:
-- python-django-celery
-- python-django-south
 
+There are a couple pre-requisites, though.   Use the python 'pip' installer to make sure you have recent versions of each.  
+`sudo apt-get install python-pip`
+Then:
+`pip install -U django`
+`pip install -U south`
+`pip install -U django-celery`

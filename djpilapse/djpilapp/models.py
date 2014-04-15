@@ -1,5 +1,8 @@
 from django.db import models
 import os, subprocess, Image
+from djcelery.models import PeriodicTask, IntervalSchedule
+from datetime import datetime
+
 
 class pilapse_project(models.Model):
     #Project settings
@@ -49,7 +52,7 @@ class pilapse_project(models.Model):
             valid['folder']=False
         return valid
 
-
+#-------------------------------------------------------------------------------
 
 class timelapser(models.Model):
     """
@@ -194,5 +197,6 @@ class timelapser(models.Model):
         self.set_active(False)
         return True
 
+#-------------------------------------------------------------------------------
 
 
