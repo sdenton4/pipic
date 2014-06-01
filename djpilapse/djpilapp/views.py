@@ -24,7 +24,6 @@ def index(request):
     html=s.render(c)
     return HttpResponse(html)
 
-
 def shoot(request, ss=50000, iso=100):
     """
     Take a photo and save it as new.jpg.
@@ -34,9 +33,9 @@ def shoot(request, ss=50000, iso=100):
     if ss<0: ss=0
     if ss>200000: ss=200000
     if iso>800: iso=800
-    if iso<0: iso=0
+    if iso<100: iso=100
     filename=basedir+staticdir+'new.jpg'
-    options='-awb off -n'
+    options='-awb auto -n'
     options+=' -w 640 -h 480'
     options+=' -t 100'
     options+=' -ss '+str(ss)
@@ -57,10 +56,10 @@ def findinitialparams(request):
 def jsonupdate(request):
     Q=timelapser.objects.all()[0]
     jsondict={
-        'time': time.strftime('%H:%M:%S--%m-%d-%y'),
-        'ss' : Q.ss,
-        'iso' : Q.iso,
-        'boot' : Q.boot,
+        'time'  : time.strftime('%H:%M:%S--%m-%d-%y'),
+        'ss'    : Q.ss,
+        'iso'   : Q.iso,
+        'boot'  : Q.boot,
         'active': Q.active,
     }
     J=json.dumps(jsondict)

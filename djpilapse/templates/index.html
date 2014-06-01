@@ -9,17 +9,14 @@
 
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/pilapse.css' %}" rel="stylesheet">
-        
+
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="{% static 'js/jquery-1.11.0.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
     <script src="{% static 'js/pilapse.js' %}"></script>   
-    
-    
 </head>
 
 <body>
-  
 
 <nav class="navbar navbar-default" role="navigation">
   <div class="container-fluid">
@@ -59,17 +56,50 @@
       <div class="col-md-offset-1 col-md-2 sidebar">
         <ul class="nav nav-sidebar">
         <h3>PiLapse Project</h3>
-        
-            <li> Name: {{ project.project_name }} </li>
-            <li> Folder: {{ project.folder }} </li>
-            <li> Interval: {{ project.interval }} </li>
-            <li> Height: {{ project.height }} </li>
-            <li> Width: {{ project.width }} </li>
-            <li> Brightness: {{ project.brightness }} </li>
-            <li> Delta: {{ project.delta }} </li>
-            <li> Listen Mode: {{ project.listen }} </li>
-            <li> Keep Images: {{ project.keep_images }} </li>
+
+        <small>
+        <form id="projectForm" class="form-inline" role="form">
+          <div class="form-group">
+            <label for="">Name</label>
+            <input type="text" name="projname" class="form-control"  value="{{project.project_name}}">
+          </div>
+          <div class="form-group">
+            <label for="">Folder</label>
+            <input type="text" name="projfolder" class="form-control"  value="{{project.folder}}">
+          </div>
+          <div class="form-group">
+            <label for="">Interval</label>
+            <input type="number" name="projintervarl" class="form-control"  value="{{project.interval}}">
+          </div>
+          <div class="form-group">
+            <label for="">Height</label>
+            <input type="number" name="projheight" class="form-control"  value="{{project.height}}">
+          </div>
+          <div class="form-group">
+            <label for="">Width</label>
+            <input type="number" name="projwidth" class="form-control"  value="{{project.width}}">
+          </div>
+          <div class="form-group">
+            <label for="">Brightness</label>
+            <input type="number" name="projbrightness" class="form-control"  value="{{project.brightness}}">
+          </div>
+          <div class="form-group">
+            <label for="">Delta</label>
+            <input type="number" name="projdelta" class="form-control"  value="{{project.delta}}">
+          </div>
+          <div class="form-group">
+            <label for="">Listen Mode?</label>
+            <input type="checkbox" name="projlisten" class="form-control"  value="{{project.listen}}">
+          </div>
+          <div class="form-group">
+            <label for="">Keep Images?</label>
+            <input type="checkbox" name="projkeep" class="form-control"  value="{{project.keep_images}}">
+          </div>
+          <button type="button" class="projButton navbutton btn btn-primary">Save Settings</button>
+        </form>
+        </small>
         </ul>
+
         <h3>PiLapser</h3>
         <ul class="nav nav-sidebar">
             <li> Active: {{ pilapse.active }} </li>

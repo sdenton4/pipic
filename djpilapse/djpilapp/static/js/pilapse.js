@@ -17,15 +17,6 @@
         $('#imageFrame').fadeTo('fast', 1.0);
     }
 
-    function updateArticle(page){
-    //This is cruft now.  Delete this function.
-      path = baseurl()+ 'djpilapp/' + page +'/';
-      console.log(path);
-      $.get(path, function(data){
-        $('article').html( data );
-      });
-    }
-
     function baseurl() {
         path=document.URL
         path=path.replace( "djpilapp/", "" )

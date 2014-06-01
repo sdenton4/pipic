@@ -1,6 +1,5 @@
 from django.db import models
 import os, subprocess, Image
-from djcelery.models import PeriodicTask, IntervalSchedule
 from datetime import datetime
 
 
@@ -18,6 +17,7 @@ class pilapse_project(models.Model):
     maxtime= models.IntegerField(verbose_name="Maximum time in minutes", name='maxtime')
     maxshots=models.IntegerField(verbose_name="Maximum shots", name='maxshots')
     delta = models.IntegerField(verbose_name="Allowed brightness variance", name='delta')
+    alpha = models.FloatField(verbose_name="Exponential averaging constant for brightness smoothing", name='alpha')
     listen=models.BooleanField(verbose_name="Listen mode?", name='listen')
 
     def __unicode__(self):
@@ -167,7 +167,7 @@ class timelapser(models.Model):
         targetBrightness=self.project.brightness
         self.lastbr=-128
         while abs(targetBrightness-self.lastbr)>4:
-            options='-awb off -n'
+            options='-awb auto -n'
             options+=' -w 64 -h 48'
             options+=' -t 10'
             options+=' -ss '+str(self.ss)
