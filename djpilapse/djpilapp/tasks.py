@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from celery import shared_task
-from celery.signals import worker_ready
-from djpilapp.models import *
-from time import sleep
+from djpilapp.models import timelapser
+import os, subprocess
+from time import time, sleep
 import Image
 
 @shared_task
@@ -11,26 +11,36 @@ def add(x, y):
 
 @shared_task
 def timelapse():
-    try:
+    #try:
+    T=timelapser.objects.all()[0]
+    T.set_status('Timelapse active')
+    L=[T.project.brightness]
+    while T.active:
+        loopstart=time()
         T=timelapser.objects.all()[0]
-        while T.active:
-            T=timelapser.objects.all()[0]
-            proj=T.project
-            timelapse_shoot()
-            if not T.active: break
-            sleep(proj.interval)
-    except:
-        T.set_active(False)
-        return False
+        proj=T.project
+        L=timelapse_shoot(L)
+        if not T.active: break
+        loopend=time()
+        sleep(max([0,proj.interval-(loopend-loopstart)]))
+    #except:
+    #    T.set_active(False)
+    #    T.set_status('idle')
+    #    return False
+    T.set_status('idle')
+    T.set_active(False)
     return True
 
 @shared_task
-def timelapse_shoot():
+def timelapse_shoot(L=None, width=20):
+    """
+    `L` is a list of recent image brightnesses.
+    `width` is the number of images to use in finding average brightness.
+    """
     T=timelapser.objects.all()[0]
     if not T.active: return None
     proj=T.project
-    #Exponential dropoff for brightness adjustment.
-    alpha=proj.alpha
+    if L==None: L=[proj.brightness]
 
     #figure out the filename.
     dtime=subprocess.check_output(['date', '+%y%m%d_%T']).strip()
@@ -59,14 +69,20 @@ def timelapse_shoot():
         return False
 
     newbr=T.avgbrightness(im)
-    T.lastbr=alpha*newbr+(1-alpha)*T.lastbr
+    if len(L)>=width: L=L[1:]
+    L.append(newbr)
+    avgbr=sum(L)/len(L)
+    T.lastbr=newbr
+    T.avgbr=avgbr
+
 
     #Dynamically adjust ss and iso.
-    (T.ss, T.iso)=T.dynamic_adjust(target=proj.brightness, lastbr=T.lastbr)
-    print str(newbr)+'\t'+str(T.lastbr)+'\t'+str(T.ss)+'\t'+str(T.iso)
+    (T.ss, T.iso)=T.dynamic_adjust(target=proj.brightness, lastbr=avgbr)
+    print str(L)
+    print str(newbr)+'\t'+str(avgbr)+'\t'+str(T.ss)+'\t'+str(T.iso)
     T.shots_taken+=1
 
-    delta=proj.brightness-newbr
+    delta=proj.brightness-avgbr
     #if abs(delta)>self.maxdelta and not (maxxedbr or minnedbr):
     if abs(delta)>proj.delta:
         #Too far from target brightness.
@@ -75,5 +91,5 @@ def timelapse_shoot():
     else:
         T.lastshot=filename
     T.save()
-
+    return L
 

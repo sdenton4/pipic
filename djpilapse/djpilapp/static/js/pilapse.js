@@ -95,8 +95,8 @@
             $.ajax(url);
         });
 
-        $('.activebutton').mouseenter(function(){$(this).fadeTo('slow',0.75)});
-        $('.activebutton').mouseleave(function(){$(this).fadeTo('slow',1.0)});
+        $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',0.75)});
+        $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',1.0)});
 
         //Page Updates
         setInterval(function() {
@@ -113,32 +113,25 @@
                   dataType: "json",
                   success: function(data){
                       if (data['lastshot']!=$('#pilapse_lastshot').html()){
-                          console.log(data['lastshot'], $('#pilapse_lastshot').html())
                           functionStack.push( loadImage );
                       };
                       $('#alertBox').hide()
                       $('#jsontarget').html(data['time']);
                       $('#pilapse_ss').html(data['ss']);
                       $('#pilapse_iso').html(data['iso']);
-                      $('#pilapse_lastbr').html(data['brightness']);
+                      $('#pilapse_lastbr').html(data['lastbr']);
+                      $('#pilapse_avgbr').html(data['avgbr']);
+                      $('#pilapse_status').html(data['status']);
                       $('#pilapse_shots').html(data['shots']);
                       $('#pilapse_lastshot').html(data['lastshot']);
                       if (data['active']==false){
                           $('#pilapse_active').html('False');
-                          $('.photoButton').fadeTo(0.2, 1);
-                          $('.photoButton').addClass('activebutton');
-                          $('.calibrateButton').fadeTo(0.2, 1);
-                          $('.calibrateButton').addClass('activebutton');
-                          $('.lapseButton').fadeTo(0.2, 1);
-                          $('.lapseButton').addClass('activebutton');
+                          $('.activeButton').fadeTo(0.2, 1);
+                          $('.activeButton').addClass('navbutton');
                       } else { 
                           $('#pilapse_active').html('True');
-                          $('.photoButton').fadeTo(0.2, 0.2);
-                          $('.photoButton').removeClass('activebutton');
-                          $('.calibrateButton').fadeTo(0.2, 0.2);
-                          $('.calibrateButton').removeClass('activebutton');
-                          $('.lapseButton').fadeTo(0.2, 1);
-                          $('.lapseButton').removeClass('activebutton');
+                          $('.activeButton').fadeTo(0.2, 0.2);
+                          $('.activeButton').removeClass('navbutton');
                       };
                     },
                   error: function(data){ $('#alertBox').show() }

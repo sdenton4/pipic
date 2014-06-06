@@ -1,12 +1,10 @@
 # Create your views here.
 
 import subprocess, json
-import Image
-import time
+from time import time, strftime
 from django.http import HttpResponse
-from django.template import Template, Context
+from django.template import Context
 from django.template.loader import get_template
-from django.utils import simplejson
 from django.views.decorators.csrf import csrf_exempt
 
 from djpilapp.models import *
@@ -30,6 +28,11 @@ def shoot(request, ss=50000, iso=100):
     """
     Take a photo and save it as new.jpg.
     """
+    #Check that camera is available.
+    Q=timelapser.objects.all()[0]
+    if Q.active: return HttpResponse(location)
+    Q.set_active(True)
+    Q.set_status('Taking manual photo')
     ss=int(ss)
     iso=int(iso)
     if ss<0: ss=0
@@ -48,6 +51,8 @@ def shoot(request, ss=50000, iso=100):
     #im=Image.open(filename)
     #im.save(filename)
     location='static/new.jpg'
+    Q.set_status('idle')
+    Q.set_active(False)
     return HttpResponse(location)
 
 def findinitialparams(request):
@@ -57,6 +62,7 @@ def findinitialparams(request):
 
 def startlapse(request):
     Q=timelapser.objects.all()[0]
+    Q.findinitialparams()
     Q.set_active(True)
     timelapse.delay()
     return HttpResponse('')
@@ -90,7 +96,7 @@ def jsonupdate(request):
     Q=timelapser.objects.all()[0]
     P=Q.project
     jsondict={
-        'time'  : time.strftime('%H:%M:%S--%m-%d-%y'),
+        'time'  : strftime('%H:%M:%S--%m-%d-%y'),
         'ss'    : Q.ss,
         'iso'   : Q.iso,
         'boot'  : Q.boot,
@@ -98,6 +104,8 @@ def jsonupdate(request):
         'shots' : Q.shots_taken,
         'lastshot': Q.lastshot,
         'lastbr': Q.lastbr,
+        'status': Q.status,
+        'avgbr' : Q.avgbr,
 
         'alpha' : P.alpha,
         'brightness' : P.brightness,

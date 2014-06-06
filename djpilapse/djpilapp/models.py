@@ -1,7 +1,5 @@
 from django.db import models
 import os, subprocess, Image
-from datetime import datetime
-
 
 class pilapse_project(models.Model):
     #Project settings
@@ -64,6 +62,8 @@ class timelapser(models.Model):
     currentss = models.IntegerField(verbose_name="Shutter Speed", name='ss')
     currentiso = models.IntegerField(verbose_name="ISO", name='iso')
     lastbr = models.IntegerField(verbose_name="Last shot brightness", name='lastbr')
+    avgbr = models.IntegerField(verbose_name="Average brightness", name='avgbr')
+    status = models.CharField(max_length=200, name='status')
     shots_taken = models.IntegerField(verbose_name="Shots taken", name='shots_taken')
     lastshot = models.CharField(max_length=200, name="lastshot")
     start_on_boot=models.BooleanField(verbose_name="Start on boot?", name='boot')
@@ -85,6 +85,10 @@ class timelapser(models.Model):
         Set the camera's `active` variable.  Used to claim the resource.
         """
         self.active=state
+        self.save()
+
+    def set_status(self, status):
+        self.status=status
         self.save()
 
     def set_start_on_boot(self, state=True):
@@ -112,15 +116,17 @@ class timelapser(models.Model):
         mu0=sum([i*h[i] for i in range(len(h))])/pixels
         return mu0
 
-    def dynamic_adjust(self, target=None, lastbr=None):
+    def dynamic_adjust(self, target=None, lastbr=None, gamma=1.0):
         """
         Applies a simple gradient descent to try to correct shutterspeed and
         brightness to match the target brightness.
+        `gamma` determines sensitivity of adjustment.
+        A good value is 2.5 when finding initial parameters, and 1.0 during timelapse.
         """
         if target==None: target=self.project.brightness
         if lastbr==None: lastbr=self.lastbr
         delta=target-lastbr
-        Adj = lambda v: int( v*(1.0+delta*2.5/target) )
+        Adj = lambda v: int( v*(1.0+delta*gamma/target) )
         newss=self.ss
         newiso=self.iso
         if delta<0:
@@ -142,9 +148,6 @@ class timelapser(models.Model):
                 newiso=Adj(self.iso)
                 newiso=min([newiso,self.maxiso])
         return (newss,newiso)
-        self.ss=newss
-        self.iso=newiso
-        self.save()
 
     def maxxedbrightness(self):
         """
@@ -166,6 +169,7 @@ class timelapser(models.Model):
         if self.active:
             return False
         self.set_active(True)
+        self.set_status('Calibrating...')
         killtoken=False
         targetBrightness=self.project.brightness
         self.lastbr=-128
@@ -182,7 +186,7 @@ class timelapser(models.Model):
             self.avgbr=self.lastbr
 
             #Dynamically adjust ss and iso.
-            self.dynamic_adjust()
+            (self.ss, self.iso)=self.dynamic_adjust(gamma=2.5)
             print self.ss, self.iso, self.lastbr
             #We use a killtoken so that the while loop runs one extra time before
             #deciding to quit because the max/min iso and ss have been reached.
@@ -196,7 +200,8 @@ class timelapser(models.Model):
                     break
                 else:
                     killtoken=True
-        self.save()
+            self.save()
+        self.set_status('idle')
         self.set_active(False)
         return True
 

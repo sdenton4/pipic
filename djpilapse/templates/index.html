@@ -18,9 +18,9 @@
 
 <body>
 
+<!--
 <nav class="navbar navbar-default" role="navigation">
   <div class="container-fluid">
-    <!-- Brand and toggle get grouped for better mobile display -->
     <div class="navbar-header">
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
         <span class="sr-only">Toggle navigation</span>
@@ -42,10 +42,10 @@
         <li><button type="button" id="newProjectBtn" class="btn btn-success navbar-btn" href="newProject">+ New Project</button></li>
         
       </ul>
-    </div><!-- /.navbar-collapse -->
-  </div><!-- /.container-fluid -->
+    </div>
+  </div>
 </nav>
-
+-->
 
 <!-- start overview content --------------------------------------------------->
 <article id="overview">
@@ -76,29 +76,40 @@
         </form>
 
         <p>
-        <button type="button" class="photoButton activebutton btn btn-primary">Take Picture</button><br />
-        <button type="button" class="refreshButton activebutton btn btn-primary">Refresh Image</button><br />
+        <button type="button" class="refreshButton navbutton btn btn-primary">Refresh Image</button><br />
         </p>
 
         <p>
-        <button type="button" class="calibrateButton activebutton btn btn-primary">Find SS/ISO</button><br />
+        <button type="button" class="photoButton activebutton navbutton btn btn-primary">Take Picture</button><br />
+        <button type="button" class="calibrateButton activebutton navbutton btn btn-primary">Find SS/ISO</button><br />
+        <button type="button" class="lapseButton activebutton navbutton btn btn-primary">Start Timelapse</button><br />
         </p>
 
         <p>
-        <button type="button" class="lapseButton activebutton btn btn-primary">Start Timelapse</button><br />
-        <button type="button" class="deactivateButton activebutton btn btn-primary">Deactivate</button><br />
+        <button type="button" class="deactivateButton btn btn-primary">Deactivate</button><br />
         </p>
 
         <p>
-        <button type="button" class="rebootButton activebutton btn btn-primary">Reboot</button><br />
-        <button type="button" class="poweroffButton activebutton btn btn-primary">Power Off</button><br />
+        <button type="button" class="rebootButton navbutton btn btn-primary">Reboot</button><br />
+        <button type="button" class="poweroffButton navbutton btn btn-primary">Power Off</button><br />
         </p>
       </div>
 
       <!--Settings-->
       <div class="col-md-4 sidebar">
+        <h3>PiLapser</h3>
         <ul class="nav nav-sidebar">
-        <h3>PiLapse Project</h3>
+            <li> <b>Active:</b> <span id="pilapse_active">{{ pilapse.active }}</span> </li>
+            <li> <b>Status:</b> <span id="pilapse_status">{{ pilapse.status }}</span> </li>
+            <li> <b>Current SS:</b> <span id="pilapse_ss">{{ pilapse.ss }}</span> </li>
+            <li> <b>Current ISO:</b> <span id="pilapse_iso">{{ pilapse.iso }}</span> </li>
+            <li> <b>Avg Brightness:</b> <span id="pilapse_avgbr">{{ pilapse.avgbr }}</span> </li>
+            <li> <b>Shots taken:</b> <span id="pilapse_shots">{{ pilapse.shots_taken }}</span> </li>
+            <li> <b>Last shot:</b> <span id="pilapse_lastshot">{{ pilapse.lastshot }}</span> </li>
+            <li> <b>Last shot brightness:</b> <span id="pilapse_lastbr">{{ pilapse.lastbr }}</span> </li>
+        </ul>
+
+        <h4>PiLapse Project</h4>
 
         <small>
         <ul>
@@ -141,18 +152,6 @@
           <button type="button" class="projSaveButton activebutton btn btn-primary">Save Settings</button>
         </form>
         </small>
-        </ul>
-
-        <h3>PiLapser</h3>
-        <ul class="nav nav-sidebar">
-            <li> Active: <span id="pilapse_active">{{ pilapse.active }}</span> </li>
-            <li> Project: <span id="pilapse_project">{{ pilapse.project }}</span> </li>
-            <li> Current SS: <span id="pilapse_ss">{{ pilapse.ss }}</span> </li>
-            <li> Current ISO: <span id="pilapse_iso">{{ pilapse.iso }}</span> </li>
-            <li> Avg Brightness: <span id="pilapse_lastbr">{{ pilapse.lastbr }}</span> </li>
-            <li> Shots taken: <span id="pilapse_shots">{{ pilapse.shots_taken }}</span> </li>
-            <li> Last shot: <span id="pilapse_lastshot">{{ pilapse.lastshot }}</span> </li>
-        </ul>
       </div>
     </div>
     <div class="row">
