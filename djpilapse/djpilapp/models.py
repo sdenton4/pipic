@@ -59,13 +59,13 @@ class timelapser(models.Model):
     We construct a timelapser as a Django model.  There should be only a single instance
     in the database table; we will only ever use the first instance.
     """
-
     uid = models.CharField(max_length=200)
     project = models.ForeignKey(pilapse_project)
     currentss = models.IntegerField(verbose_name="Shutter Speed", name='ss')
     currentiso = models.IntegerField(verbose_name="ISO", name='iso')
     lastbr = models.IntegerField(verbose_name="Last shot brightness", name='lastbr')
     shots_taken = models.IntegerField(verbose_name="Shots taken", name='shots_taken')
+    lastshot = models.CharField(max_length=200, name="lastshot")
     start_on_boot=models.BooleanField(verbose_name="Start on boot?", name='boot')
     active=models.BooleanField(verbose_name="Tracks whether currently taking photos", name='active')
     metersite='a'
@@ -112,14 +112,15 @@ class timelapser(models.Model):
         mu0=sum([i*h[i] for i in range(len(h))])/pixels
         return mu0
 
-    def dynamic_adjust(self):
+    def dynamic_adjust(self, target=None, lastbr=None):
         """
         Applies a simple gradient descent to try to correct shutterspeed and
         brightness to match the target brightness.
         """
-        targetBrightness=self.project.brightness
-        delta=targetBrightness-self.lastbr
-        Adj = lambda v: int( v*(1.0+delta*1.0/self.project.brightness) )
+        if target==None: target=self.project.brightness
+        if lastbr==None: lastbr=self.lastbr
+        delta=target-lastbr
+        Adj = lambda v: int( v*(1.0+delta*2.5/target) )
         newss=self.ss
         newiso=self.iso
         if delta<0:
@@ -140,8 +141,10 @@ class timelapser(models.Model):
             else:
                 newiso=Adj(self.iso)
                 newiso=min([newiso,self.maxiso])
+        return (newss,newiso)
         self.ss=newss
         self.iso=newiso
+        self.save()
 
     def maxxedbrightness(self):
         """
@@ -193,7 +196,7 @@ class timelapser(models.Model):
                     break
                 else:
                     killtoken=True
-        self.save_base()
+        self.save()
         self.set_active(False)
         return True
 

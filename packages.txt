@@ -1,2 +1,6 @@
 screen imagemagick git fbi mplayer
 python-pip python-zmq python-numpy python-imaging python-django ipython
+
+
+PIP PACKAGES
+requests

@@ -45,109 +45,127 @@
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
 </nav>
+
+
+<!-- start overview content --------------------------------------------------->
 <article id="overview">
-  <!-- start overview content -->
   <div class="container-fluid" >
     <div class="row">
-      <div id="imageFrame" class="col-md-offset-2 col-md-6">
-      
+
+      <!--Photo preview-->
+      <div id="imageFrame" class="col-md-4">
           <img  id="lastImage" src="{% static 'new.jpg' %}" class="img-responsive">
       </div>
-      <div class="col-md-offset-1 col-md-2 sidebar">
+
+      <!--Controls-->
+      <div class="col-md-4 controls">
+          <div class="alert alert-warning" id="alertBox">
+          <a href="#" class="close" data-dismiss="alert">&times;</a>
+          <span id="alertMessage"><strong>Warning!</strong> Server connection lost.</span>
+          </div>
+
+        <form id="photoForm" class="form-inline" role="form">
+          <div class="form-group">
+            <label for="formshutterspeed">Shutter Speed</label>
+            <input type="number" name="formshutterspeed" class="form-control"  value="{{ pilapse.ss }}">
+          </div><br />
+          <div class="form-group">
+            <label for="formiso">ISO</label>
+            <input type="number" name="formiso" class="form-control" value="{{ pilapse.iso }}">
+          </div>
+        </form>
+
+        <p>
+        <button type="button" class="photoButton activebutton btn btn-primary">Take Picture</button><br />
+        <button type="button" class="refreshButton activebutton btn btn-primary">Refresh Image</button><br />
+        </p>
+
+        <p>
+        <button type="button" class="calibrateButton activebutton btn btn-primary">Find SS/ISO</button><br />
+        </p>
+
+        <p>
+        <button type="button" class="lapseButton activebutton btn btn-primary">Start Timelapse</button><br />
+        <button type="button" class="deactivateButton activebutton btn btn-primary">Deactivate</button><br />
+        </p>
+
+        <p>
+        <button type="button" class="rebootButton activebutton btn btn-primary">Reboot</button><br />
+        <button type="button" class="poweroffButton activebutton btn btn-primary">Power Off</button><br />
+        </p>
+      </div>
+
+      <!--Settings-->
+      <div class="col-md-4 sidebar">
         <ul class="nav nav-sidebar">
         <h3>PiLapse Project</h3>
 
         <small>
+        <ul>
+        <li><b>Project name:</b> {{project.project_name}}</li>
+        <li><b>Project Folder:</b> {{project.folder}}</li>
+        </ul>
         <form id="projectForm" class="form-inline" role="form">
           <div class="form-group">
-            <label for="">Name</label>
-            <input type="text" name="projname" class="form-control"  value="{{project.project_name}}">
-          </div>
-          <div class="form-group">
-            <label for="">Folder</label>
-            <input type="text" name="projfolder" class="form-control"  value="{{project.folder}}">
-          </div>
-          <div class="form-group">
             <label for="">Interval</label>
-            <input type="number" name="projintervarl" class="form-control"  value="{{project.interval}}">
-          </div>
+            <input type="number" name="projinterval" class="form-control"  value="{{project.interval}}">
+          </div><br />
           <div class="form-group">
             <label for="">Height</label>
             <input type="number" name="projheight" class="form-control"  value="{{project.height}}">
-          </div>
+          </div><br />
           <div class="form-group">
             <label for="">Width</label>
             <input type="number" name="projwidth" class="form-control"  value="{{project.width}}">
-          </div>
+          </div><br />
           <div class="form-group">
             <label for="">Brightness</label>
             <input type="number" name="projbrightness" class="form-control"  value="{{project.brightness}}">
-          </div>
+          </div><br />
           <div class="form-group">
             <label for="">Delta</label>
             <input type="number" name="projdelta" class="form-control"  value="{{project.delta}}">
-          </div>
+          </div><br />
+          <!-- DISABLED OPTIONS
+
           <div class="form-group">
             <label for="">Listen Mode?</label>
             <input type="checkbox" name="projlisten" class="form-control"  value="{{project.listen}}">
-          </div>
+          </div><br />
           <div class="form-group">
             <label for="">Keep Images?</label>
             <input type="checkbox" name="projkeep" class="form-control"  value="{{project.keep_images}}">
-          </div>
-          <button type="button" class="projButton navbutton btn btn-primary">Save Settings</button>
+          </div><br />
+
+          -->
+          <button type="button" class="projSaveButton activebutton btn btn-primary">Save Settings</button>
         </form>
         </small>
         </ul>
 
         <h3>PiLapser</h3>
         <ul class="nav nav-sidebar">
-            <li> Active: {{ pilapse.active }} </li>
-            <li> Start on boot: {{ pilapse.start_on_boot }} </li>
-            <li> Project: {{ pilapse.project }} </li>
-            <li> Current SS: {{ pilapse.ss }} </li>
-            <li> Current ISO: {{ pilapse.iso }} </li>
-            <li> Avg Brightness: {{ pilapse.lastbr }} </li>
-            <li> Shots taken: {{ pilapse.shots_taken }} </li>
-            <li> Avg Brightness: {{ pilapse.lastbr }} </li>
+            <li> Active: <span id="pilapse_active">{{ pilapse.active }}</span> </li>
+            <li> Project: <span id="pilapse_project">{{ pilapse.project }}</span> </li>
+            <li> Current SS: <span id="pilapse_ss">{{ pilapse.ss }}</span> </li>
+            <li> Current ISO: <span id="pilapse_iso">{{ pilapse.iso }}</span> </li>
+            <li> Avg Brightness: <span id="pilapse_lastbr">{{ pilapse.lastbr }}</span> </li>
+            <li> Shots taken: <span id="pilapse_shots">{{ pilapse.shots_taken }}</span> </li>
+            <li> Last shot: <span id="pilapse_lastshot">{{ pilapse.lastshot }}</span> </li>
         </ul>
       </div>
     </div>
     <div class="row">
-      <div class="col-md-offset-2 col-md-6">
-
-        <form id="photoForm" class="form-inline" role="form">
-          <div class="form-group">
-            <label for="">Shutter Speed</label>
-            <input type="number" name="shutterspeed" class="form-control"  value=500>
-          </div>
-          <div class="form-group">
-            <label for="">ISO</label>
-            <input type="number" name="iso" class="form-control" value=200 >
-          </div>
-        </form>
-
-      </div>
       <div class="row">
         <div class="col-md-offset-2 col-md-6">
-          <button type="button" class="photoButton navbutton btn btn-primary">Take Picture</button>
-          <button type="button" class="refreshButton navbutton btn btn-primary">Refresh Image</button>
-         <!--<nav style="display:block; margin:auto;">
-            <ol style="list-style-type:none;">
-            <li class="photoButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Take a picture!</li>
-            <li class="refreshButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Refresh Image</li>
-            </ol>
-            </nav>-->
         </div>
       </div>
-
-        
-
-        
     </div>
   </div>
+
+
+<!--start newProject content--------------------------------------------------->
   </article>
-  <!--start newProject content-->
   <article id="newProject" style="display: none">
   <div class="container-fluid">
     <div class="row">
@@ -278,8 +296,8 @@
       </div>
       <div class="row">
         <div class="col-md-offset-2 col-md-6">
-          <button type="button" class="photoButton navbutton btn btn-primary">Take Picture</button>
-          <button type="button" class="refreshButton navbutton btn btn-primary">Refresh Image</button>
+          <button type="button" class="photoButton activebutton btn btn-primary">Take Picture</button>
+          <button type="button" class="refreshButton activebutton btn btn-primary">Refresh Image</button>
          <!--<nav style="display:block; margin:auto;">
             <ol style="list-style-type:none;">
             <li class="photoButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Take a picture!</li>
@@ -293,9 +311,7 @@
 
         
   </div>
-  
-  
-  
+
 </article>
 <div id='jsontarget'>
 </div>
