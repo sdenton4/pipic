@@ -139,6 +139,7 @@
                       $('#alertBox').hide()
                       $('#jsontarget').html(data['time']);
                       $('#diskfree').html(data['diskfree']);
+                      $('#remaining').html(data['remaining']);
                       $('#pilapse_ss').html(data['ss']);
                       $('#pilapse_iso').html(data['iso']);
                       $('#pilapse_lastbr').html(data['lastbr']);

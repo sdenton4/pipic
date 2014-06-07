@@ -2,7 +2,7 @@
 
 import subprocess, json
 from time import time, strftime
-from os import statvfs
+from os import statvfs, stat
 from django.http import HttpResponse
 from django.template import Context
 from django.template.loader import get_template
@@ -72,6 +72,8 @@ def deactivate(request):
     Q=timelapser.objects.all()[0]
     Q.set_active(False)
     Q.set_status('idle')
+    Q.set_active(False)
+    Q.set_status('idle')
     return HttpResponse('')
 
 def reboot(request):
@@ -108,10 +110,17 @@ def jsonupdate(request):
     Q=timelapser.objects.all()[0]
     P=Q.project
     s=statvfs('/')
-    free=str(s.f_bsize*s.f_bavail/(1024*1024))+' Mb'
+    df=s.f_bsize*s.f_bavail
+    try:
+        size=stat(Q.lastshot).st_size
+        remaining=int(float(df)/size)
+    except:
+        remaining=''
+    free=str(df/(1024*1024))+' Mb'
     jsondict={
         'time'  : strftime('%H:%M:%S--%m-%d-%y'),
-        'diskfree'    : free,
+        'diskfree'  : free,
+        'remaining' : remaining,
 
         'ss'    : Q.ss,
         'iso'   : Q.iso,
