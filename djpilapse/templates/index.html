@@ -76,23 +76,29 @@
         </form>
 
         <p>
-        <button type="button" class="refreshButton navbutton btn btn-primary">Refresh Image</button><br />
+        <button type="button" class="refreshButton btn btn-primary">Refresh Image</button><br />
         </p>
 
         <p>
-        <button type="button" class="photoButton activebutton navbutton btn btn-primary">Take Picture</button><br />
-        <button type="button" class="calibrateButton activebutton navbutton btn btn-primary">Find SS/ISO</button><br />
-        <button type="button" class="lapseButton activebutton navbutton btn btn-primary">Start Timelapse</button><br />
+        <button type="button" class="photoButton activebutton btn btn-primary">Take Picture</button><br />
+        <button type="button" class="calibrateButton activebutton btn btn-primary">Find SS/ISO</button><br />
+        <button type="button" class="lapseButton activebutton btn btn-primary">Start Timelapse</button><br />
         </p>
 
         <p>
-        <button type="button" class="deactivateButton btn btn-primary">Deactivate</button><br />
+        <button type="button" class="deactivateButton btn btn-primary">Deactivate Camera</button><br />
         </p>
 
         <p>
-        <button type="button" class="rebootButton navbutton btn btn-primary">Reboot</button><br />
-        <button type="button" class="poweroffButton navbutton btn btn-primary">Power Off</button><br />
+        <button type="button" class="deleteButton btn btn-warning">Delete All Pictures</button><br />
+        <button type="button" class="rebootButton btn btn-warning">Reboot</button><br />
+        <button type="button" class="poweroffButton btn btn-warning">Power Off</button><br />
+
         </p>
+
+
+        <div class="alert alert-warning" id="confirm_box">
+        </div>
       </div>
 
       <!--Settings-->
@@ -113,43 +119,32 @@
 
         <small>
         <ul>
-        <li><b>Project name:</b> {{project.project_name}}</li>
+        <li><b>Project Name:</b> {{project.project_name}}</li>
         <li><b>Project Folder:</b> {{project.folder}}</li>
+        <li><b>Available Disk Space:</b> <span id='diskfree'></span></li>
         </ul>
         <form id="projectForm" class="form-inline" role="form">
           <div class="form-group">
-            <label for="">Interval</label>
+            <label for="">Interval (<span id="project_interval">{{project.interval}}</span>)</label>
             <input type="number" name="projinterval" class="form-control"  value="{{project.interval}}">
           </div><br />
           <div class="form-group">
-            <label for="">Height</label>
-            <input type="number" name="projheight" class="form-control"  value="{{project.height}}">
-          </div><br />
-          <div class="form-group">
-            <label for="">Width</label>
+            <label for="">Width (<span id="project_width">{{project.width}}</span>)</label>
             <input type="number" name="projwidth" class="form-control"  value="{{project.width}}">
           </div><br />
           <div class="form-group">
-            <label for="">Brightness</label>
+            <label for="">Height (<span id="project_height">{{project.height}}</span>)</label>
+            <input type="number" name="projheight" class="form-control"  value="{{project.height}}">
+          </div><br />
+          <div class="form-group">
+            <label for="">Brightness (<span id="project_brightness">{{project.brightness}}</span>)</label>
             <input type="number" name="projbrightness" class="form-control"  value="{{project.brightness}}">
           </div><br />
           <div class="form-group">
-            <label for="">Delta</label>
+            <label for="">Delta (<span id="project_delta">{{project.delta}}</span>)</label>
             <input type="number" name="projdelta" class="form-control"  value="{{project.delta}}">
           </div><br />
-          <!-- DISABLED OPTIONS
-
-          <div class="form-group">
-            <label for="">Listen Mode?</label>
-            <input type="checkbox" name="projlisten" class="form-control"  value="{{project.listen}}">
-          </div><br />
-          <div class="form-group">
-            <label for="">Keep Images?</label>
-            <input type="checkbox" name="projkeep" class="form-control"  value="{{project.keep_images}}">
-          </div><br />
-
-          -->
-          <button type="button" class="projSaveButton activebutton btn btn-primary">Save Settings</button>
+          <button type="button" class="projSaveButton btn btn-primary">Save Settings</button>
         </form>
         </small>
       </div>

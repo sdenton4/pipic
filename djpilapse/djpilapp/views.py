@@ -2,6 +2,7 @@
 
 import subprocess, json
 from time import time, strftime
+from os import statvfs
 from django.http import HttpResponse
 from django.template import Context
 from django.template.loader import get_template
@@ -70,6 +71,7 @@ def startlapse(request):
 def deactivate(request):
     Q=timelapser.objects.all()[0]
     Q.set_active(False)
+    Q.set_status('idle')
     return HttpResponse('')
 
 def reboot(request):
@@ -78,6 +80,16 @@ def reboot(request):
 
 def poweroff(request):
     subprocess.call('sudo poweroff', shell=True)
+    return HttpResponse('')
+
+def deleteall(request):
+    Q=timelapser.objects.all()[0]
+    proj=Q.project
+    folder=proj.folder
+    if folder[-1]!='/': folder+='/'
+    subprocess.call('sudo rm '+folder+'*.jpg', shell=True)
+    Q.shots_taken=0
+    Q.save()
     return HttpResponse('')
 
 #We would like a nice way to run this at startup time....
@@ -95,8 +107,12 @@ def boot_timelapse():
 def jsonupdate(request):
     Q=timelapser.objects.all()[0]
     P=Q.project
+    s=statvfs('/')
+    free=str(s.f_bsize*s.f_bavail/(1024*1024))+' Mb'
     jsondict={
         'time'  : strftime('%H:%M:%S--%m-%d-%y'),
+        'diskfree'    : free,
+
         'ss'    : Q.ss,
         'iso'   : Q.iso,
         'boot'  : Q.boot,

@@ -73,15 +73,6 @@
             $('#overview').hide();
             $('#newProject').show();
         });
-
-        $('.rebootButton').click(function(){
-            url=baseurl()+'djpilapp/reboot/'
-            $.ajax(url);
-        });
-        $('.poweroffButton').click(function(){
-            url=baseurl()+'djpilapp/poweroff/'
-            $.ajax(url);
-        });
         $('.calibrateButton').click(function(){
             url=baseurl()+'djpilapp/findinitialparams/'
             $.ajax(url);
@@ -95,8 +86,38 @@
             $.ajax(url);
         });
 
-        $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',0.75)});
-        $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',1.0)});
+        $('#confirm_box').toggle()
+
+        $('.rebootButton').click(function(){
+            $('#confirm_box').html(
+            "Are you sure you want to reboot?<br /><button class='btn btn-danger' id='rebootReal'>Reboot</button>")
+            $('#confirm_box').toggle()
+            $('#rebootReal').click(function(){
+                url=baseurl()+'djpilapp/reboot/'
+                $.ajax(url);
+            });
+        });
+
+        $('.poweroffButton').click(function(){
+            $('#confirm_box').html(
+            "Are you sure you want to power down?<br /><button class='btn btn-danger' id='poweroffReal'>Power Off</button>")
+            $('#confirm_box').toggle()
+            $('#poweroffReal').click(function(){
+            url=baseurl()+'djpilapp/poweroff/'
+                $.ajax(url);
+            });
+        });
+
+        $('.deleteButton').click(function(){
+            $('#confirm_box').html(
+            "Are you sure you want to delete all stored pictures?<br /><button class='btn btn-danger' id='deleteReal'>Delete All</button>")
+            $('#confirm_box').toggle()
+            $('#deleteReal').click(function(){
+            url=baseurl()+'djpilapp/deleteall/'
+                $.ajax(url);
+            });
+        });
+
 
         //Page Updates
         setInterval(function() {
@@ -117,6 +138,7 @@
                       };
                       $('#alertBox').hide()
                       $('#jsontarget').html(data['time']);
+                      $('#diskfree').html(data['diskfree']);
                       $('#pilapse_ss').html(data['ss']);
                       $('#pilapse_iso').html(data['iso']);
                       $('#pilapse_lastbr').html(data['lastbr']);
@@ -124,14 +146,20 @@
                       $('#pilapse_status').html(data['status']);
                       $('#pilapse_shots').html(data['shots']);
                       $('#pilapse_lastshot').html(data['lastshot']);
+                      $('#project_interval').html(data['interval']);
+                      $('#project_brightness').html(data['brightness']);
+                      $('#project_width').html(data['width']);
+                      $('#project_height').html(data['height']);
+                      $('#project_delta').html(data['delta']);
+                      $('#project_brightness').html(data['brightness']);
                       if (data['active']==false){
                           $('#pilapse_active').html('False');
-                          $('.activeButton').fadeTo(0.2, 1);
-                          $('.activeButton').addClass('navbutton');
+                          $('.activebutton').fadeTo(0.5, 1.0);
+                          $('.activebutton').removeClass('btn-disabled');
                       } else { 
                           $('#pilapse_active').html('True');
-                          $('.activeButton').fadeTo(0.2, 0.2);
-                          $('.activeButton').removeClass('navbutton');
+                          $('.activebutton').fadeTo(0.5, 0.2);
+                          $('.activebutton').addClass('btn-disabled');
                       };
                     },
                   error: function(data){ $('#alertBox').show() }

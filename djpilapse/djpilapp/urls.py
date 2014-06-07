@@ -12,5 +12,6 @@ urlpatterns = patterns('',
     url('^deactivate/$', views.deactivate, name='deactivate'),
     url('^reboot/$', views.reboot, name='reboot'),
     url('^poweroff/$', views.poweroff, name='poweroff'),
+    url('^deleteall/$', views.deleteall, name='deleteall'),    
     url('^newProjectSubmit/$', views.newProjectSubmit, name='newProjectSubmit'),
 )
