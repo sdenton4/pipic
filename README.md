@@ -20,3 +20,13 @@ loadOut.py:
     Copy various configuration files onto a disk that will be used with the Pi.
     Also sets hostname, timezone, and does some other housekeeping.
 
+--------------------------------------------------------------
+
+We're also working on building a Django server for managing all your timelapse needs.
+
+There are a couple pre-requisites, though.   Use the python 'pip' installer to make sure you have recent versions of each.  
+`sudo apt-get install python-pip`
+Then:
+`pip install -U django`
+`pip install -U south`
+`pip install -U django-celery`

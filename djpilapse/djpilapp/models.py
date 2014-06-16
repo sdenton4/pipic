@@ -15,6 +15,7 @@ class pilapse_project(models.Model):
     maxtime= models.IntegerField(verbose_name="Maximum time in minutes", name='maxtime')
     maxshots=models.IntegerField(verbose_name="Maximum shots", name='maxshots')
     delta = models.IntegerField(verbose_name="Allowed brightness variance", name='delta')
+    alpha = models.FloatField(verbose_name="Exponential averaging constant for brightness smoothing", name='alpha')
     listen=models.BooleanField(verbose_name="Listen mode?", name='listen')
 
     def __unicode__(self):
@@ -49,21 +50,22 @@ class pilapse_project(models.Model):
             valid['folder']=False
         return valid
 
-    
-
+#-------------------------------------------------------------------------------
 
 class timelapser(models.Model):
     """
     We construct a timelapser as a Django model.  There should be only a single instance
     in the database table; we will only ever use the first instance.
     """
-
     uid = models.CharField(max_length=200)
     project = models.ForeignKey(pilapse_project)
     currentss = models.IntegerField(verbose_name="Shutter Speed", name='ss')
     currentiso = models.IntegerField(verbose_name="ISO", name='iso')
     lastbr = models.IntegerField(verbose_name="Last shot brightness", name='lastbr')
+    avgbr = models.IntegerField(verbose_name="Average brightness", name='avgbr')
+    status = models.CharField(max_length=200, name='status')
     shots_taken = models.IntegerField(verbose_name="Shots taken", name='shots_taken')
+    lastshot = models.CharField(max_length=200, name="lastshot")
     start_on_boot=models.BooleanField(verbose_name="Start on boot?", name='boot')
     active=models.BooleanField(verbose_name="Tracks whether currently taking photos", name='active')
     metersite='a'
@@ -83,6 +85,10 @@ class timelapser(models.Model):
         Set the camera's `active` variable.  Used to claim the resource.
         """
         self.active=state
+        self.save()
+
+    def set_status(self, status):
+        self.status=status
         self.save()
 
     def set_start_on_boot(self, state=True):
@@ -110,14 +116,17 @@ class timelapser(models.Model):
         mu0=sum([i*h[i] for i in range(len(h))])/pixels
         return mu0
 
-    def dynamic_adjust(self):
+    def dynamic_adjust(self, target=None, lastbr=None, gamma=1.0):
         """
         Applies a simple gradient descent to try to correct shutterspeed and
         brightness to match the target brightness.
+        `gamma` determines sensitivity of adjustment.
+        A good value is 2.5 when finding initial parameters, and 1.0 during timelapse.
         """
-        targetBrightness=self.project.brightness
-        delta=targetBrightness-self.lastbr
-        Adj = lambda v: int( v*(1.0+delta*1.0/self.project.brightness) )
+        if target==None: target=self.project.brightness
+        if lastbr==None: lastbr=self.lastbr
+        delta=target-lastbr
+        Adj = lambda v: int( v*(1.0+delta*gamma/target) )
         newss=self.ss
         newiso=self.iso
         if delta<0:
@@ -138,8 +147,7 @@ class timelapser(models.Model):
             else:
                 newiso=Adj(self.iso)
                 newiso=min([newiso,self.maxiso])
-        self.ss=newss
-        self.iso=newiso
+        return (newss,newiso)
 
     def maxxedbrightness(self):
         """
@@ -161,11 +169,12 @@ class timelapser(models.Model):
         if self.active:
             return False
         self.set_active(True)
+        self.set_status('Calibrating...')
         killtoken=False
         targetBrightness=self.project.brightness
         self.lastbr=-128
         while abs(targetBrightness-self.lastbr)>4:
-            options='-awb off -n'
+            options='-awb auto -n'
             options+=' -w 64 -h 48'
             options+=' -t 10'
             options+=' -ss '+str(self.ss)
@@ -177,7 +186,7 @@ class timelapser(models.Model):
             self.avgbr=self.lastbr
 
             #Dynamically adjust ss and iso.
-            self.dynamic_adjust()
+            (self.ss, self.iso)=self.dynamic_adjust(gamma=2.5)
             print self.ss, self.iso, self.lastbr
             #We use a killtoken so that the while loop runs one extra time before
             #deciding to quit because the max/min iso and ss have been reached.
@@ -191,9 +200,11 @@ class timelapser(models.Model):
                     break
                 else:
                     killtoken=True
-        self.save_base()
+            self.save()
+        self.set_status('idle')
         self.set_active(False)
         return True
 
+#-------------------------------------------------------------------------------
 
 

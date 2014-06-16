@@ -6,32 +6,35 @@
         return values
     }
 
-    function loadImage() {
-        $('#imageFrame').fadeTo('fast', 0.5);
-        path=baseurl()+"static/new.jpg"
-        //width=320;
-        //height=240;
-        target='#imageFrame';
-        X=$('<img src="'+ path +'">')//.width(width).height(height);
-        $(target).html(X);
-        $('#imageFrame').fadeTo('fast', 1.0);
-    }
-
-    function updateArticle(page){
-    //This is cruft now.  Delete this function.
-      path = baseurl()+ 'djpilapp/' + page +'/';
-      console.log(path);
-      $.get(path, function(data){
-        $('article').html( data );
-      });
-    }
-
     function baseurl() {
         path=document.URL
         path=path.replace( "djpilapp/", "" )
         path=path.replace( "#", "" )
         return path
     };
+
+    function loadImage() {
+        $('#imageFrame').fadeTo('fast', 0.5);
+        path=baseurl()+"static/new.jpg"
+        //width=320;
+        //height=240;
+        target='#imageFrame';
+        X=$('<img src="'+ path +'" id="lastImage" class="img-responsive">')//.width(width).height(height);
+        $(target).html(X);
+        $('#imageFrame').fadeTo('fast', 1.0);
+    }
+
+    function saveProjSettings() {
+        vals=formvalues('#projectForm')
+        $.ajax(
+            url=baseurl()+"djpilapp/saveproj/",
+            settings={ 
+              data:vals,
+              type:"POST"
+            }
+        );
+    }
+
 
     //Stack to place requests to the server on.
     functionStack=[]
@@ -50,11 +53,11 @@
         //Navigation buttons.
         $('.photoButton').click(function(){
             vals=formvalues('#photoForm')
-            iso=vals['iso']
-            ss=vals['shutterspeed']*100
+            iso=vals['formiso']
+            ss=vals['formshutterspeed']
             url=baseurl()+'djpilapp/shoot/'+ss+'/'+iso+'/'
             console.log(url)
-            waittime=ss/100+500
+            waittime=ss/1000+500
             $.ajax(url).done( function(){
                 $('#imageFrame').fadeTo('fast', 0.5);
                 setTimeout(function(){
@@ -62,6 +65,7 @@
                 },waittime);    
             });
         });
+<<<<<<< HEAD
         
         $('#newProjectSubmit').click(function(){
             event.preventDefault();
@@ -92,6 +96,16 @@
         });
         
         //Toggles for views
+=======
+        $('#alertBox').hide()
+        $('.refreshButton').click(function(){
+            functionStack.push( loadImage );
+        });
+        $('.projSaveButton').click(function(){
+            functionStack.push( saveProjSettings );
+        });
+
+>>>>>>> celery
         $('#overviewBtn').click(function(){
             event.preventDefault();
             $('#rvwProjects').hide();
@@ -111,14 +125,51 @@
             $('#overview').hide();
             $('#newProject').show();
         });
-        
-        
         $('.calibrateButton').click(function(){
             url=baseurl()+'djpilapp/findinitialparams/'
             $.ajax(url);
         });
-        $('.navbutton').mouseenter(function(){$(this).fadeTo('slow',0.75)});
-        $('.navbutton').mouseleave(function(){$(this).fadeTo('slow',1.0)});
+        $('.lapseButton').click(function(){
+            url=baseurl()+'djpilapp/startlapse/'
+            $.ajax(url);
+        });
+        $('.deactivateButton').click(function(){
+            url=baseurl()+'djpilapp/deactivate/'
+            $.ajax(url);
+        });
+
+        $('#confirm_box').toggle()
+
+        $('.rebootButton').click(function(){
+            $('#confirm_box').html(
+            "Are you sure you want to reboot?<br /><button class='btn btn-danger' id='rebootReal'>Reboot</button>")
+            $('#confirm_box').toggle()
+            $('#rebootReal').click(function(){
+                url=baseurl()+'djpilapp/reboot/'
+                $.ajax(url);
+            });
+        });
+
+        $('.poweroffButton').click(function(){
+            $('#confirm_box').html(
+            "Are you sure you want to power down?<br /><button class='btn btn-danger' id='poweroffReal'>Power Off</button>")
+            $('#confirm_box').toggle()
+            $('#poweroffReal').click(function(){
+            url=baseurl()+'djpilapp/poweroff/'
+                $.ajax(url);
+            });
+        });
+
+        $('.deleteButton').click(function(){
+            $('#confirm_box').html(
+            "Are you sure you want to delete all stored pictures?<br /><button class='btn btn-danger' id='deleteReal'>Delete All</button>")
+            $('#confirm_box').toggle()
+            $('#deleteReal').click(function(){
+            url=baseurl()+'djpilapp/deleteall/'
+                $.ajax(url);
+            });
+        });
+
 
         //Page Updates
         setInterval(function() {
@@ -129,10 +180,44 @@
             }
             else {
                 path=baseurl()+'djpilapp/jsonupdate/';
-                $.getJSON( path, function( data ) {
-                $('#jsontarget').html(data['time']);
+                $.ajax(
+                  url=path,
+                  settings={
+                  dataType: "json",
+                  success: function(data){
+                      if (data['lastshot']!=$('#pilapse_lastshot').html()){
+                          functionStack.push( loadImage );
+                      };
+                      $('#alertBox').hide()
+                      $('#jsontarget').html(data['time']);
+                      $('#diskfree').html(data['diskfree']);
+                      $('#remaining').html(data['remaining']);
+                      $('#pilapse_ss').html(data['ss']);
+                      $('#pilapse_iso').html(data['iso']);
+                      $('#pilapse_lastbr').html(data['lastbr']);
+                      $('#pilapse_avgbr').html(data['avgbr']);
+                      $('#pilapse_status').html(data['status']);
+                      $('#pilapse_shots').html(data['shots']);
+                      $('#pilapse_lastshot').html(data['lastshot']);
+                      $('#project_interval').html(data['interval']);
+                      $('#project_brightness').html(data['brightness']);
+                      $('#project_width').html(data['width']);
+                      $('#project_height').html(data['height']);
+                      $('#project_delta').html(data['delta']);
+                      $('#project_brightness').html(data['brightness']);
+                      if (data['active']==false){
+                          $('#pilapse_active').html('False');
+                          $('.activebutton').fadeTo(0.5, 1.0);
+                          $('.activebutton').removeClass('btn-disabled');
+                      } else { 
+                          $('#pilapse_active').html('True');
+                          $('.activebutton').fadeTo(0.5, 0.2);
+                          $('.activebutton').addClass('btn-disabled');
+                      };
+                    },
+                  error: function(data){ $('#alertBox').show() }
+                });
               }
-            )};
         }, 2000);
         //Begin code for dealing with Cross Site Request Forgery Protection
         function getCookie(name) {

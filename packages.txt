@@ -1,3 +1,6 @@
-screen python-imaging python-django imagemagick git
+screen imagemagick git fbi mplayer
+python-pip python-zmq python-numpy python-imaging python-django ipython
 
-fbi python-zmq python-numpy imagemagick mplayer ipython
+
+PIP PACKAGES
+requests

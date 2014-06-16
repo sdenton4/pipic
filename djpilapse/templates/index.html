@@ -9,21 +9,24 @@
 
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/pilapse.css' %}" rel="stylesheet">
-        
+
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="{% static 'js/jquery-1.11.0.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
+<<<<<<< HEAD
     <script src="{% static 'js/jquery.serialize-object.min.js' %}"></script>   
     <script src="{% static 'js/pilapse.js' %}"></script>
     
+=======
+    <script src="{% static 'js/pilapse.js' %}"></script>   
+>>>>>>> celery
 </head>
 
 <body>
-  
 
+<!--
 <nav class="navbar navbar-default" role="navigation">
   <div class="container-fluid">
-    <!-- Brand and toggle get grouped for better mobile display -->
     <div class="navbar-header">
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
         <span class="sr-only">Toggle navigation</span>
@@ -39,78 +42,131 @@
         </li>
         <li><button type="button" id="newProjectBtn" class="btn btn-success navbar-btn" href="newProject">+ New Project</button></li>
       </ul>
-    </div><!-- /.navbar-collapse -->
-  </div><!-- /.container-fluid -->
+    </div>
+  </div>
 </nav>
+<<<<<<< HEAD
 <article id="overview" style="display:none">
   <!-- start overview content -->
+=======
+-->
+
+<!-- start overview content --------------------------------------------------->
+<article id="overview">
+>>>>>>> celery
   <div class="container-fluid" >
     <div class="row">
-      <div id="imageFrame" class="col-md-offset-2 col-md-6">
-      
+
+      <!--Photo preview-->
+      <div id="imageFrame" class="col-md-4">
           <img  id="lastImage" src="{% static 'new.jpg' %}" class="img-responsive">
       </div>
-      <div class="col-md-offset-1 col-md-2 sidebar">
-        <ul class="nav nav-sidebar">
-        <h3>PiLapse Project</h3>
-        
-            <li> Name: {{ project.project_name }} </li>
-            <li> Folder: {{ project.folder }} </li>
-            <li> Interval: {{ project.interval }} </li>
-            <li> Height: {{ project.height }} </li>
-            <li> Width: {{ project.width }} </li>
-            <li> Brightness: {{ project.brightness }} </li>
-            <li> Delta: {{ project.delta }} </li>
-            <li> Listen Mode: {{ project.listen }} </li>
-            <li> Keep Images: {{ project.keep_images }} </li>
-        </ul>
-        <h3>PiLapser</h3>
-        <ul class="nav nav-sidebar">
-            <li> Active: {{ pilapse.active }} </li>
-            <li> Start on boot: {{ pilapse.start_on_boot }} </li>
-            <li> Project: {{ pilapse.project }} </li>
-            <li> Current SS: {{ pilapse.ss }} </li>
-            <li> Current ISO: {{ pilapse.iso }} </li>
-            <li> Avg Brightness: {{ pilapse.lastbr }} </li>
-            <li> Shots taken: {{ pilapse.shots_taken }} </li>
-            <li> Avg Brightness: {{ pilapse.lastbr }} </li>
-        </ul>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-offset-2 col-md-6">
+
+      <!--Controls-->
+      <div class="col-md-4 controls">
+          <div class="alert alert-warning" id="alertBox">
+          <a href="#" class="close" data-dismiss="alert">&times;</a>
+          <span id="alertMessage"><strong>Warning!</strong> Server connection lost.</span>
+          </div>
 
         <form id="photoForm" class="form-inline" role="form">
           <div class="form-group">
-            <label for="">Shutter Speed</label>
-            <input type="number" name="shutterspeed" class="form-control"  value=500>
-          </div>
+            <label for="formshutterspeed">Shutter Speed</label>
+            <input type="number" name="formshutterspeed" class="form-control"  value="{{ pilapse.ss }}">
+          </div><br />
           <div class="form-group">
-            <label for="">ISO</label>
-            <input type="number" name="iso" class="form-control" value=200 >
+            <label for="formiso">ISO</label>
+            <input type="number" name="formiso" class="form-control" value="{{ pilapse.iso }}">
           </div>
         </form>
 
-      </div>
-      <div class="row">
-        <div class="col-md-offset-2 col-md-6">
-          <button type="button" class="photoButton navbutton btn btn-primary">Take Picture</button>
-          <button type="button" class="refreshButton navbutton btn btn-primary">Refresh Image</button>
-         <!--<nav style="display:block; margin:auto;">
-            <ol style="list-style-type:none;">
-            <li class="photoButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Take a picture!</li>
-            <li class="refreshButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Refresh Image</li>
-            </ol>
-            </nav>-->
+        <p>
+        <button type="button" class="refreshButton btn btn-primary">Refresh Image</button><br />
+        </p>
+
+        <p>
+        <button type="button" class="photoButton activebutton btn btn-primary">Take Picture</button><br />
+        <button type="button" class="calibrateButton activebutton btn btn-primary">Find SS/ISO</button><br />
+        <button type="button" class="lapseButton activebutton btn btn-primary">Start Timelapse</button><br />
+        </p>
+
+        <p>
+        <button type="button" class="deactivateButton btn btn-primary">Deactivate Camera</button><br />
+        </p>
+
+        <p>
+        <button type="button" class="deleteButton btn btn-warning">Delete All Pictures</button><br />
+        <button type="button" class="rebootButton btn btn-warning">Reboot</button><br />
+        <button type="button" class="poweroffButton btn btn-warning">Power Off</button><br />
+
+        </p>
+
+
+        <div class="alert alert-warning" id="confirm_box">
         </div>
       </div>
 
-        
+      <!--Settings-->
+      <div class="col-md-4 sidebar">
+        <h3>PiLapser</h3>
+        <ul class="nav nav-sidebar">
+            <li> <b>Active:</b> <span id="pilapse_active">{{ pilapse.active }}</span> </li>
+            <li> <b>Status:</b> <span id="pilapse_status">{{ pilapse.status }}</span> </li>
+            <li> <b>Current SS:</b> <span id="pilapse_ss">{{ pilapse.ss }}</span> </li>
+            <li> <b>Current ISO:</b> <span id="pilapse_iso">{{ pilapse.iso }}</span> </li>
+            <li> <b>Avg Brightness:</b> <span id="pilapse_avgbr">{{ pilapse.avgbr }}</span> </li>
+            <li> <b>Shots taken:</b> <span id="pilapse_shots">{{ pilapse.shots_taken }}</span> </li>
+            <li> <b>Last shot:</b> <span id="pilapse_lastshot">{{ pilapse.lastshot }}</span> </li>
+            <li> <b>Last shot brightness:</b> <span id="pilapse_lastbr">{{ pilapse.lastbr }}</span> </li>
+        </ul>
 
-        
+        <h4>PiLapse Project</h4>
+
+        <small>
+        <ul>
+        <li><b>Project Name:</b> {{project.project_name}}</li>
+        <li><b>Project Folder:</b> {{project.folder}}</li>
+        <li><b>Available Disk Space:</b> <span id='diskfree'></span></li>
+        <li><b>Est Shots Remaining:</b> <span id='remaining'></span></li>
+        </ul>
+        <form id="projectForm" class="form-inline" role="form">
+          <div class="form-group">
+            <label for="">Interval (<span id="project_interval">{{project.interval}}</span>)</label>
+            <input type="number" name="projinterval" class="form-control"  value="{{project.interval}}">
+          </div><br />
+          <div class="form-group">
+            <label for="">Width (<span id="project_width">{{project.width}}</span>)</label>
+            <input type="number" name="projwidth" class="form-control"  value="{{project.width}}">
+          </div><br />
+          <div class="form-group">
+            <label for="">Height (<span id="project_height">{{project.height}}</span>)</label>
+            <input type="number" name="projheight" class="form-control"  value="{{project.height}}">
+          </div><br />
+          <div class="form-group">
+            <label for="">Brightness (<span id="project_brightness">{{project.brightness}}</span>)</label>
+            <input type="number" name="projbrightness" class="form-control"  value="{{project.brightness}}">
+          </div><br />
+          <div class="form-group">
+            <label for="">Delta (<span id="project_delta">{{project.delta}}</span>)</label>
+            <input type="number" name="projdelta" class="form-control"  value="{{project.delta}}">
+          </div><br />
+          <button type="button" class="projSaveButton btn btn-primary">Save Settings</button>
+        </form>
+        </small>
+      </div>
+    </div>
+    <div class="row">
+      <div class="row">
+        <div class="col-md-offset-2 col-md-6">
+        </div>
+      </div>
     </div>
   </div>
+
+
+<!--start newProject content--------------------------------------------------->
   </article>
+<<<<<<< HEAD
   <!--start rvwProject content-->
   <article id="rvwProjects" style="display: none">
     <div class="container-fluid" >
@@ -132,6 +188,9 @@
   
   <!--start newProject content-->
   <article id="newProject" style="display: ">
+=======
+  <article id="newProject" style="display: none">
+>>>>>>> celery
   <div class="container-fluid">
     <div class="row">
       <div id="imageFrame" class="col-md-offset-2 col-md-4">
@@ -239,8 +298,8 @@
       </div>
       <div class="row">
         <div class="col-md-offset-2 col-md-6">
-          <button type="button" class="photoButton navbutton btn btn-primary">Take Picture</button>
-          <button type="button" class="refreshButton navbutton btn btn-primary">Refresh Image</button>
+          <button type="button" class="photoButton activebutton btn btn-primary">Take Picture</button>
+          <button type="button" class="refreshButton activebutton btn btn-primary">Refresh Image</button>
          <!--<nav style="display:block; margin:auto;">
             <ol style="list-style-type:none;">
             <li class="photoButton navbutton" style="border:1px dotted black; padding:.25em; width:5em; display:inline;">Take a picture!</li>
@@ -254,9 +313,7 @@
 
         
   </div>
-  
-  
-  
+
 </article>
 <div id='jsontarget'>
 </div>

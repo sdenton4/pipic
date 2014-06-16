@@ -64,7 +64,7 @@ class timelapse:
         self.maxss=1500000
 
         #Brightness data caching.
-        self.brightwidth=4
+        self.brightwidth=20
         self.brData=[]
         self.brindex=0
         self.lastbr=0

@@ -115,6 +115,7 @@ TEMPLATE_DIRS = (
     '/home/pi/pipic/djpilapse/templates/'
 )
 
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -127,6 +128,8 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
     'djpilapp',
+    #'south',
+    #'djcelery',
 )
 
 # A sample logging configuration. The only tangible logging
