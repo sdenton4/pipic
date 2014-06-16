@@ -326,6 +326,11 @@ def main(argv):
     args=parser.parse_args()
     TL = timelapse(w=args.width, h=args.height, interval=args.interval, maxshots=args.maxshots, maxtime=args.maxtime, targetBrightness=args.brightness, maxdelta=args.delta)
 
+    try:
+        os.listdir('/home/pi/pictures')
+    except:
+        os.mkdir('/home/pi/pictures')
+
     if args.listen:
         TL.listen()
     else:
