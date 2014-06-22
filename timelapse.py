@@ -160,7 +160,7 @@ class timelapse:
         """
         killtoken=False
         while abs(self.targetBrightness-self.lastbr)>4:
-            options='-awb off -n'
+            options='-awb auto -n'
             options+=' -w 64 -h 48'
             options+=' -t 10'
             options+=' -ss '+str(self.currentss)
@@ -203,7 +203,7 @@ class timelapse:
         """
         Take a photo and save it at a specified filename.
         """
-        options='-awb off -n'
+        options='-awb auto -n'
         options+=' -w '+str(self.w)+' -h '+str(self.h)
         options+=' -t 50'
         options+=' -ss '+str(self.currentss)
