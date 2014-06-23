@@ -7,10 +7,8 @@ urlpatterns = patterns('',
     url('^shoot/(\d+)/(\d+)/$', views.shoot, name='shoot'),
     url('^findinitialparams/$', views.findinitialparams, name='findinitialparams'),
     url('^jsonupdate/$', views.jsonupdate, name='jsonupdate'),
-<<<<<<< HEAD
     url('^newProject/$', views.newProjectSubmit, name='newProjectSubmit'),
     ## add URL for newProject view
-=======
     url('^saveproj/$', views.saveProjectSettings, name='saveProjectSettings'),
     url('^startlapse/$', views.startlapse, name='startlapse'),
     url('^deactivate/$', views.deactivate, name='deactivate'),
@@ -18,5 +16,4 @@ urlpatterns = patterns('',
     url('^poweroff/$', views.poweroff, name='poweroff'),
     url('^deleteall/$', views.deleteall, name='deleteall'),    
     url('^newProjectSubmit/$', views.newProjectSubmit, name='newProjectSubmit'),
->>>>>>> celery
 )

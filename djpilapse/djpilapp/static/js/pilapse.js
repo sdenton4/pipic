@@ -65,38 +65,6 @@
                 },waittime);    
             });
         });
-<<<<<<< HEAD
-        
-        $('#newProjectSubmit').click(function(){
-            event.preventDefault();
-            
-            var settings = $('#newProjectForm').serializeJSON();
-            console.log(settings);
-            console.log(baseurl()+'djpilapp/newProject/')
-            $.ajax({
-                type: "POST",
-                url: baseurl()+'djpilapp/newProject/',
-                data: settings,
-                success: function(data){
-                    $('#newPName').text(data);
-                    $('#newProjectAlert').show('slow');
-                }
-
-            });
-            
-            
-                                    
-        });            //$.post(url)...
-            //Post https://api.jquery.com/jQuery.post/ to submit the JSON object via the newProject request
-
-        
-        
-        $('.refreshButton').click(function(){
-            functionStack.push( loadImage );
-        });
-        
-        //Toggles for views
-=======
         $('#alertBox').hide()
         $('.refreshButton').click(function(){
             functionStack.push( loadImage );
@@ -104,8 +72,6 @@
         $('.projSaveButton').click(function(){
             functionStack.push( saveProjSettings );
         });
-
->>>>>>> celery
         $('#overviewBtn').click(function(){
             event.preventDefault();
             $('#rvwProjects').hide();
@@ -118,7 +84,6 @@
             $('#newProject').hide();
             $('#rvwProjects').show();
         });
-        
         $('#newProjectBtn').click(function(){
             event.preventDefault();
             $('#rvwProjects').hide();
@@ -265,7 +230,6 @@
                 }
             }
         });
-        
-        
-        
+
+
     });//end document.ready

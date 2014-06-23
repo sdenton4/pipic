@@ -6,14 +6,11 @@ from os import statvfs, stat
 from django.http import HttpResponse
 from django.template import Context
 from django.template.loader import get_template
-<<<<<<< HEAD
 from django.utils import simplejson
 from django import forms
 
 from django.forms.extras.widgets import SelectDateWidget
-=======
 from django.views.decorators.csrf import csrf_exempt
->>>>>>> celery
 
 from djpilapp.models import *
 from djpilapp.tasks import *
@@ -28,21 +25,26 @@ def index(request):
     try:    
         P = pilapse_project.objects.all()[0]
     except:
-        pass #to do: create an entry in the database
+        P=pilapse_project.objects.create( project_name='pipic',
+            folder='/home/pi/pipic', keep_images=False,
+            brightness=128, interval=15, width=1292, height=972, maxtime=-1,
+            maxshots=-1, delta=32, alpha=0.1, listen=False)
+        P.save()
     try:
         Q = timelapser.objects.all()[0]
     except:
-        pass #to do: create an entry in the database
+        Q=timelapser.objects.create(uid=0,
+            project=pilapse_project.objects.all()[0],
+            ss=50000, iso=100, lastbr=128, avgbr=128,
+            status='idle', shots_taken=0, lastshot='', boot=True,
+            active=False)
+        Q.save()
     R = pilapse_project.objects.all()
     c=Context({
         'project': P,
         'pilapse': Q,
-<<<<<<< HEAD
         'project_list': R,
-    })    
-=======
     })
->>>>>>> celery
     html=s.render(c)
     return HttpResponse(html)
 
@@ -76,11 +78,11 @@ def shoot(request, ss=50000, iso=100):
     Q.set_status('idle')
     Q.set_active(False)
     return HttpResponse(location)
-    
-    
+
+
 def newProjectSubmit(request):
     print request.body
-    
+
     params = json.loads( request.body )
     print params
     
@@ -192,8 +194,6 @@ def jsonupdate(request):
     J=json.dumps(jsondict)
     return HttpResponse(J)
 
-<<<<<<< HEAD
-=======
 @csrf_exempt
 def saveProjectSettings(request):
     vals=request.POST.dict()
@@ -215,5 +215,4 @@ def newProjectSubmit(request):
     jdict=json.dumps( request.body )
     print jdict
     return HttpResponse('')
->>>>>>> celery
 

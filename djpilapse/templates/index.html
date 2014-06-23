@@ -13,47 +13,14 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="{% static 'js/jquery-1.11.0.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
-<<<<<<< HEAD
     <script src="{% static 'js/jquery.serialize-object.min.js' %}"></script>   
     <script src="{% static 'js/pilapse.js' %}"></script>
-    
-=======
-    <script src="{% static 'js/pilapse.js' %}"></script>   
->>>>>>> celery
 </head>
 
 <body>
 
-<!--
-<nav class="navbar navbar-default" role="navigation">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a id="overviewBtn">PiLapse</a>
-    </div>
-
-      <ul class="nav navbar-nav navbar-right">
-        <li><button type="button" id="rvwProjectBtn" class="btn btn-default navbar-btn" href="rvwProjects"">Review Projects </button>
-        </li>
-        <li><button type="button" id="newProjectBtn" class="btn btn-success navbar-btn" href="newProject">+ New Project</button></li>
-      </ul>
-    </div>
-  </div>
-</nav>
-<<<<<<< HEAD
-<article id="overview" style="display:none">
-  <!-- start overview content -->
-=======
--->
-
 <!-- start overview content --------------------------------------------------->
 <article id="overview">
->>>>>>> celery
   <div class="container-fluid" >
     <div class="row">
 
@@ -164,33 +131,8 @@
   </div>
 
 
-<!--start newProject content--------------------------------------------------->
   </article>
-<<<<<<< HEAD
-  <!--start rvwProject content-->
-  <article id="rvwProjects" style="display: none">
-    <div class="container-fluid" >
-        <div class="row">
-          <div id="rvwImageFrame" class="col-md-offset-2 col-md-4">
-                <img  id="lastImage" src="http://i.imgur.com/SltaKer.jpg" class="img-responsive">
-          </div>
-          <div class="col-md-offset-2 col-md-2">
-              <button type="button" href="#" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">Project Select <span class="caret"></span></button>
-            <ul class="dropdown-menu" id="projList">
-                {% for project in project_list %}
-                    <li><a href="{{ project.folder }}">{{ project.project_name }}</a></li>
-                {% endfor %}
-            </ul>
-          </div>
-        </div>
-    </div>
-  </article>
-  
-  <!--start newProject content-->
-  <article id="newProject" style="display: ">
-=======
   <article id="newProject" style="display: none">
->>>>>>> celery
   <div class="container-fluid">
     <div class="row">
       <div id="imageFrame" class="col-md-offset-2 col-md-4">
