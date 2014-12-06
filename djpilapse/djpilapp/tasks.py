@@ -10,7 +10,7 @@ def add(x, y):
     return x + y
 
 @shared_task
-def timelapse():
+def timelapse(width=20):
     #try:
     T=timelapser.objects.all()[0]
     T.set_status('Timelapse active')
@@ -19,7 +19,7 @@ def timelapse():
         loopstart=time()
         T=timelapser.objects.all()[0]
         proj=T.project
-        L=timelapse_shoot(L)
+        L=timelapse_shoot(L, width)
         if not T.active: break
         loopend=time()
         sleep(max([0,proj.interval-(loopend-loopstart)]))
@@ -32,7 +32,7 @@ def timelapse():
     return True
 
 @shared_task
-def timelapse_shoot(L=None, width=20):
+def timelapse_shoot(L=None, width=20, gamma=None):
     """
     `L` is a list of recent image brightnesses.
     `width` is the number of images to use in finding average brightness.
@@ -41,6 +41,7 @@ def timelapse_shoot(L=None, width=20):
     if not T.active: return None
     proj=T.project
     if L==None: L=[proj.brightness]
+    if gamma==None: gamma=1.0/width
 
     #figure out the filename.
     dtime=subprocess.check_output(['date', '+%y%m%d_%T']).strip()
@@ -75,9 +76,9 @@ def timelapse_shoot(L=None, width=20):
     T.lastbr=newbr
     T.avgbr=avgbr
 
-
     #Dynamically adjust ss and iso.
-    (T.ss, T.iso)=T.dynamic_adjust(target=proj.brightness, lastbr=avgbr)
+    (T.ss, T.iso)=T.dynamic_adjust(target=proj.brightness,
+                                   lastbr=avgbr, gamma=gamma)
     print str(L)
     print str(newbr)+'\t'+str(avgbr)+'\t'+str(T.ss)+'\t'+str(T.iso)
     T.shots_taken+=1
@@ -90,6 +91,8 @@ def timelapse_shoot(L=None, width=20):
         os.remove(filename)
     else:
         T.lastshot=filename
+    T1=timelapser.objects.all()[0]
+    if not T1.active: return None
     T.save()
     return L
 

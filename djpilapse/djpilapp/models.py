@@ -116,12 +116,14 @@ class timelapser(models.Model):
         mu0=sum([i*h[i] for i in range(len(h))])/pixels
         return mu0
 
-    def dynamic_adjust(self, target=None, lastbr=None, gamma=1.0):
+    def dynamic_adjust(self, target=None, lastbr=None, gamma=0.1):
         """
         Applies a simple gradient descent to try to correct shutterspeed and
         brightness to match the target brightness.
         `gamma` determines sensitivity of adjustment.
-        A good value is 2.5 when finding initial parameters, and 1.0 during timelapse.
+        A good value is 2.5 when finding initial parameters, and 0.1 during the
+        actual timelapse.  (A high value of gamma coincident with a large
+        averaging period can lead to oscillating brightness.)
         """
         if target==None: target=self.project.brightness
         if lastbr==None: lastbr=self.lastbr
