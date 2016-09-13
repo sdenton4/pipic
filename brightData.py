@@ -6,7 +6,7 @@ import os, sys, getopt
 usagestring="Usage: brightData.py [options]\n"
 usagestring+="Options:\n"
 usagestring+="-q      : Print this usage screen.\n"
-usagestring+="-n      : Numbe of shots to take.  Best not to mix with manual ss/iso.\n"
+usagestring+="-n      : Number of shots to take.  Best not to mix with manual ss/iso.\n"
 usagestring+="-s 5000 : Manually set shutter speed.\n"
 usagestring+="-o 100  : Manually set ISO.\n"
 
@@ -65,9 +65,7 @@ def main(argv):
     hostname=f.read().strip().replace(' ','')
     f.close()
 
-    try:
-        os.listdir('/home/pi/brdata/')
-    except:
+    if not os.path.exists("/home/pi/brdata")
         os.mkdir('/home/pi/brdata/')
 
     for i in range(nshots):
