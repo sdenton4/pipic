@@ -59,8 +59,16 @@ class timelapse_config(object):
     self.brightwidth = config_map.get('brightwidth', 20)
     self.gamma = config_map.get('gamma', 0.2)
 
+  def floatToSS(self, x):
+    base = int(self.minss + (self.maxss - self.minss) * x)
+    return max(min(base, self.maxss), self.minss)
+  
+  def SSToFloat(self, ss):
+    base = (float(ss) - self.minss) / (self.maxss - self.minss)
+    return max(min(base, 1.0), 0.0)
+    
   def to_dict(self):
-    d = {
+    return {
       'w': self.w,
       'h': self.h,
       'iso': self.iso,
@@ -78,7 +86,20 @@ class timelapse_config(object):
       'gamma': self.gamma,
     }
 
-class timelapse:
+class timelapse_state(object):
+  """Container class for timelapser state, to allow easy testing.
+  """
+  def __init__(self, config, state_map={}):
+    self.brData = state_map.get('brData', [])
+    self.brindex = state_map.get('brindex', 0)
+    self.lastbr = state_map.get('lastbr', 0)
+    self.avgbr = state_map.get('avgbr', 0)
+    self.shots_taken = state_map.get('shots_taken', 0)
+    self.framerate = state_map.get('max_fr', config.max_fr)
+    self.wb = state_map.get('wb', (Fraction(337, 256), Fraction(343, 256)))
+
+
+class timelapse(object):
   """
   Timelapser class.
   Once the timelapser is initialized, use the `findinitialparams` method to find
@@ -100,7 +121,6 @@ class timelapse:
       config = timelapse_config({})
     self.config = config
     self.camera = camera
-    self.camera.framerate = config.max_fr
     self.camera.resolution = (config.w, config.h)
     self.camera.iso = config.iso
 
@@ -112,35 +132,25 @@ class timelapse:
     # We consider shutterspeeds as a floating point number between 0 and 1,
     # denoting position between the max and min shutterspeed.
     # These two functions let us convert back and forth between representations.
-    self.floatToSS = lambda x : max(min(int(self.config.minss 
-                                            + (self.config.maxss - self.config.minss) * x), 
-                                        self.config.maxss), self.config.minss)
-    self.SSToFloat = lambda ss : max(min((float(ss) - self.config.minss) 
-                                         / (self.config.maxss - self.config.minss), 1.0), 
-                                     0.0)
-
-    #Brightness data caching.
-    self.brData = []
-    self.brindex = 0
-    self.lastbr = 0
-    self.avgbr = 0
-    self.shots_taken = 0
+    
+    self.state = timelapse_state(config)
+    self.camera.framerate = self.state.framerate
 
     print 'Finding initial SS....'
     # Give the camera's auto-exposure and auto-white-balance algorithms
     # some time to measure the scene and determine appropriate values
-    time.sleep(1)
+    time.sleep(2)
     # This capture discovers initial AWB and SS.
     self.camera.capture('try.jpg')
     self.camera.shutter_speed = self.camera.exposure_speed
-    self.currentss=self.camera.exposure_speed
+    self.state.currentss=self.camera.exposure_speed
     self.camera.exposure_mode = 'off'
-    self.wb_gains = self.camera.awb_gains
-    print 'WB: ', self.wb_gains
+    self.state.wb_gains = self.camera.awb_gains
+    print 'WB: ', self.state.wb_gains
     self.camera.awb_mode = 'off'
-    self.camera.awb_gains = self.wb_gains
+    self.camera.awb_gains = self.state.wb_gains
 
-    self.findinitialparams()
+    self.findinitialparams(self.config, self.state)
     print "Set up timelapser with: "
     print "\tmaxtime :\t", config.maxtime
     print "\tmaxshots:\t", config.maxshots
@@ -151,12 +161,13 @@ class timelapse:
   def __repr__(self):
     return 'A timelapse instance.'
 
-  def avgbrightness(self, im):
+  def avgbrightness(self, im, config=None):
     """
     Find the average brightness of the provided image according to the method
     defined in `self.metersite`.  `im` should be a PIL image.
     """
-    meter = self.config.metersite
+    if config is None: config = self.config
+    meter = config.metersite
     aa = im.convert('L') # Converts to greyscale
     (h, w) = aa.size
     if meter == 'c':
@@ -185,35 +196,43 @@ class timelapse:
     mu0 = 1.0 * sum([i * h[i] for i in range(len(h))]) / pixels
     return round(mu0, 2)
 
-  def dynamic_adjust(self):
+  def dynamic_adjust(self, config=None, state=None):
     """
     Applies a simple gradient descent to try to correct shutterspeed and
     brightness to match the target brightness.
     """
-    delta = self.config.targetBrightness - self.lastbr
+    if config is None: config = self.config
+    if state is None: state = self.state
+
+    delta = config.targetBrightness - state.lastbr
     #Adj = lambda v: math.log( math.exp(v)*(1.0+1.0*delta*gamma/self.targetBrightness) )
-    Adj = lambda v: v * (1.0 + 1.0 * delta * self.config.gamma 
-                         / self.config.targetBrightness)
-    x = self.SSToFloat(self.currentss)
+    Adj = lambda v: v * (1.0 + 1.0 * delta * config.gamma 
+                         / config.targetBrightness)
+    x = config.SSToFloat(state.currentss)
     if x <= 0.01: x = 0.01
     x = Adj(x)
-    self.currentss = self.floatToSS(x)
+    state.currentss = config.floatToSS(x)
     #Find an appropriate framerate.
     #For low shutter speeds, ths can considerably speed up the capture.
-    FR = Fraction(1000000, self.currentss)
-    if FR > self.config.max_fr: FR = Fraction(self.config.max_fr)
-    if FR < self.config.min_fr: FR = Fraction(self.config.min_fr)
-    self.camera.framerate = FR
+    FR = Fraction(1000000, state.currentss)
+    if FR > config.max_fr: FR = Fraction(config.max_fr)
+    if FR < config.min_fr: FR = Fraction(config.min_fr)
+    state.framerate = FR
 
-  def capture(self):
+  def capture(self, config=None, state=None):
     """
     Take a picture, returning a PIL image.
     """
+    if config is None: config = self.config
+    if state is None: state = self.state
+
     # Create the in-memory stream
     stream = io.BytesIO()
-    self.camera.ISO = self.config.iso
-    self.camera.shutter_speed = self.currentss
-    x = self.SSToFloat(self.currentss)
+    self.camera.ISO = config.iso
+    self.camera.shutter_speed = state.currentss
+    self.camera.framerate = state.framerate
+    self.camera.resolution = (config.w, config.h)
+    x = config.SSToFloat(state.currentss)
     capstart = time.time()
     self.camera.capture(stream, format='jpeg')
     capend = time.time()
@@ -226,23 +245,32 @@ class timelapse:
     image = Image.open(stream)
     return image
 
-  def findinitialparams(self):
+  def findinitialparams(self, config=None, state=None):
     """
     Take a number of small shots in succession to determine a shutterspeed
     and ISO for taking photos of the desired brightness.
     """
+    if config is None: config = self.config
+    if state is None: state = self.state
     killtoken = False
-    self.camera.resolution = (64, 48)
-    while abs(self.config.targetBrightness - self.lastbr) > 4:
-      im = self.capture()
-      self.lastbr = self.avgbrightness(im)
-      self.avgbr = self.lastbr
+
+    # Find init params with small pictures and high gamma, to work quickly.
+    cfg = config.to_dict()
+    cfg['w'] = 64
+    cfg['h'] = 48
+    cfg['gamma'] = 2.0
+    init_config = timelapse_config(cfg)
+    
+    while abs(config.targetBrightness - state.lastbr) > 4:
+      im = self.capture(init_config, state)
+      state.lastbr = self.avgbrightness(im)
+      state.avgbr = state.lastbr
 
       #Dynamically adjust ss and iso.
-      self.dynamic_adjust()
-      x = self.SSToFloat(self.currentss)
+      self.dynamic_adjust(init_config, state)
+      x = config.SSToFloat(state.currentss)
       print ('ss: % 10d\tx: % 5.3f br: % 4d\t' 
-             % (self.currentss, round(x, 2), round(self.lastbr, 2)))
+             % (state.currentss, round(x, 2), round(state.lastbr, 2)))
       if x >= 1.0:
         x = 1.0
         if killtoken == True:
@@ -255,61 +283,52 @@ class timelapse:
           break
         else:
           killtoken = True
-    self.camera.resolution = (self.config.w, self.config.h)
     return True
 
-  def maxxedbrightness(self):
-    """
-    Check whether we've reached maximum SS and ISO.
-    """
-    return (self.currentss == self.config.maxss)
-
-  def minnedbrightness(self):
-    """
-    Check whether we've reached minimum SS and ISO.
-    """
-    return (self.currentss == self.config.minss)
-
-
-  def shoot(self, filename=None, ss_adjust=True):
+  def shoot(self, filename=None, ss_adjust=True, config=None, state=None):
     """
     Take a photo and save it at a specified filename.
     """
-    im=self.capture()
+    if config is None: config = self.config
+    if state is None: state = self.state
+    im = self.capture(config, state)
     #Saves file without exif and raster data; reduces file size by 90%,
-    if filename!=None:
+    if filename != None:
       im.save(filename)
 
     if not ss_adjust: return im
 
-    self.lastbr = self.avgbrightness(im)
-    if len(self.brData) >= self.config.brightwidth:
-      self.brData[self.brindex % self.config.brightwidth] = self.lastbr
+    state.lastbr = self.avgbrightness(im)
+    if len(state.brData) >= config.brightwidth:
+      state.brData[state.brindex % config.brightwidth] = state.lastbr
     else:
-      self.brData.append(self.lastbr)
+      state.brData.append(state.lastbr)
 
     #Dynamically adjust ss and iso.
-    self.avgbr=sum(self.brData) / len(self.brData)
-    self.dynamic_adjust()
-    self.shots_taken += 1
-    self.brindex = (self.brindex + 1) % self.config.brightwidth
+    state.avgbr = sum(state.brData) / len(state.brData)
+    self.dynamic_adjust(config, state)
+    state.shots_taken += 1
+    state.brindex = (state.brindex + 1) % config.brightwidth
 
-    delta=self.config.targetBrightness - self.lastbr
-    if abs(delta) > self.config.maxdelta:
+    delta = config.targetBrightness - state.lastbr
+    if abs(delta) > config.maxdelta:
       #Too far from target brightness.
-      self.shots_taken -= 1
+      state.shots_taken -= 1
       os.remove(filename)
     return im
 
   def print_stats(self):
     tmpl = 'SS: % 10d\tX: % 8.3f\tBR: % 4d\tShots: % 5d'
-    x = self.SSToFloat(self.currentss)
-    print tmpl % (self.currentss, round(x,2), self.lastbr, self.shots_taken)
+    state = self.state
+    x = self.config.SSToFloat(state.currentss)
+    print tmpl % (state.currentss, round(x,2), state.lastbr, state.shots_taken)
 
-  def run_timelapse(self):
+  def run_timelapse(self, config=None, state=None):
     """
     Takes pictures at specified interval.
     """
+    if config is None: config = self.config
+    if state is None: state = self.state
     start_time = time.time()
     elapsed = time.time() - start_time
 
@@ -318,27 +337,27 @@ class timelapse:
     self.socket = self.context.socket(zmq.PUB)
     self.socket.bind("tcp://*:5556")
 
-    while ((elapsed < self.config.maxtime or self.config.maxtime == -1) 
-           and (self.shots_taken < self.config.maxshots
-                or self.config.maxshots == -1)):
+    while ((elapsed < config.maxtime or config.maxtime == -1) 
+           and (state.shots_taken < config.maxshots
+                or config.maxshots == -1)):
       loopstart = time.time()
       dtime = subprocess.check_output(['date', '+%y%m%d_%T']).strip()
       dtime = dtime.replace(':', '.')
       #Broadcast options for this picture on zmq.
-      command='0 shoot {} {} {} {}'.format(self.config.w, self.config.h, 
-                                           self.currentss, dtime)
+      command='0 shoot {} {} {} {}'.format(config.w, config.h, 
+                                           state.currentss, dtime)
       self.socket.send(command)
 
       #Take a picture.
       filename = ('/home/pi/pictures/%s_%s.jpg' % (self.hostname, dtime))
       self.shoot(filename=filename)
 
-      loopend=time.time()
-      x=self.SSToFloat(self.currentss)
+      loopend = time.time()
+      x = config.SSToFloat(state.currentss)
       self.print_stats()
 
       #Wait for next shot.
-      time.sleep(max([0, self.config.interval - (loopend - loopstart)]))
+      time.sleep(max([0, config.interval - (loopend - loopstart)]))
 
     self.socket.close()
 
@@ -410,6 +429,7 @@ def main(argv):
       'targetBrightness': args.brightness,
       'maxdelta': args.delta,
       'iso': args.iso,
+      # Add more configuration options here, if desired.
     }
 
     try:
