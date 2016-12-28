@@ -32,24 +32,21 @@ class timelapse_config(object):
     `brightwidth` : number of previous readings to store for choosing next 
       shutter speed.
     `gamma` : determines size of steps to take when adjusting shutterspeed.
+    ``disable_led` : Whether to disable the LED. 
   """  
   def __init__(self, config_map={}):
     self.w = config_map.get('w', 1296)
     self.h = config_map.get('h', 972)
     self.iso = config_map.get('iso', 100)
     self.interval = config_map.get('interval', 15)
-    self.maxtime = config_map.get('maxtime', 0)
-    self.maxshots = config_map.get('maxshots', 0)
-    self.targetBrightness = config_map.get('targetBrightness', 100)
+    self.maxtime = config_map.get('maxtime', -1)
+    self.maxshots = config_map.get('maxshots', -1)
+    self.targetBrightness = config_map.get('targetBrightness', 128)
     self.maxdelta = config_map.get('maxdelta', 100)
     
     # Setting the maxss under one second prevents flipping into a slower camera mode.
     self.maxss = config_map.get('maxss', 999000)
     self.minss = config_map.get('minss', 100)
-
-    self.metersite = config_map.get('metersite', 'c')
-    if self.metersite not in ['c', 'a', 'l', 'r']:
-      self.metersite = 'c'
 
     # Note: these should depend on camera model...
     self.max_fr = config_map.get('minfr', 15)
@@ -58,6 +55,8 @@ class timelapse_config(object):
     # Dynamic adjustment settings.
     self.brightwidth = config_map.get('brightwidth', 20)
     self.gamma = config_map.get('gamma', 0.2)
+
+    self.disable_led = config_map.get('disable_led', False)
 
   def floatToSS(self, x):
     base = int(self.minss + (self.maxss - self.minss) * x)
@@ -79,23 +78,26 @@ class timelapse_config(object):
       'maxdelta': self.maxdelta,
       'maxss': self.maxss,
       'minss': self.minss,
-      'metersite': self.metersite,
       'max_fr': self.max_fr,
       'min_fr': self.min_fr,
       'brightwidth': self.brightwidth,
       'gamma': self.gamma,
+      'disable_led': self.disable_led,
     }
 
 class timelapse_state(object):
   """Container class for timelapser state, to allow easy testing.
   """
   def __init__(self, config, state_map={}):
+    # List of average brightness of recent images.
     self.brData = state_map.get('brData', [])
-    self.brindex = state_map.get('brindex', 0)
-    self.lastbr = state_map.get('lastbr', 0)
-    self.avgbr = state_map.get('avgbr', 0)
+    # List of shutter speeds for recent images.
+    self.xData = state_map.get('xData', [])
+    # Number of pictures taken 
     self.shots_taken = state_map.get('shots_taken', 0)
+    # Current framerate
     self.framerate = state_map.get('max_fr', config.max_fr)
+    # White balance
     self.wb = state_map.get('wb', (Fraction(337, 256), Fraction(343, 256)))
 
 
@@ -123,6 +125,11 @@ class timelapse(object):
     self.camera = camera
     self.camera.resolution = (config.w, config.h)
     self.camera.iso = config.iso
+    if config.disable_led:
+      try:
+        camera.led = False
+      except Exception as e:
+        print "Failed to disable LED: " + e
 
     f=open('/etc/hostname')
     hostname = f.read().strip().replace(' ','')
@@ -164,33 +171,19 @@ class timelapse(object):
   def avgbrightness(self, im, config=None):
     """
     Find the average brightness of the provided image according to the method
-    defined in `self.metersite`.  `im` should be a PIL image.
+    
+    Args:
+      im: A PIL image.
+      config: A timelapseConfig object.  Defaults to self.config.
+    Returns:
+      Average brightness of the image.
     """
     if config is None: config = self.config
-    meter = config.metersite
+    aa = im.copy()
+    if aa.size[0] > 128:
+      aa.thumbnail((128, 96), Image.ANTIALIAS)
     aa = im.convert('L') # Converts to greyscale
     (h, w) = aa.size
-    if meter == 'c':
-      top = int(1.0 * h / 2 - 0.15 * h) + 1
-      bottom = int(1.0 * h / 2 + 0.15 * h) - 1
-      left = int(1.0 * w / 2 - 0.15 * w) + 1
-      right = int(1.0 * w / 2 + 0.15 * w) + 1
-    elif meter == 'l':
-      top = int(1.0 * h / 2 - 0.15 * h) + 1
-      bottom = int(1.0 * h / 2 + 0.15 * h) - 1
-      left = 0
-      right = int(.3*w)+2
-    elif meter == 'r':
-      top = int(1.0 * h / 2 - 0.15 * h) + 1
-      bottom = int(1.0*w/2+.15*w)-1
-      left = h - int(0.3 * w) - 2
-      right = w
-    else:
-      top = 0
-      bottom = h
-      left = 0
-      right = w
-    aa = aa.crop((left, top, right, bottom))
     pixels = (aa.size[0] * aa.size[1])
     h = aa.histogram()
     mu0 = 1.0 * sum([i * h[i] for i in range(len(h))]) / pixels
@@ -204,13 +197,13 @@ class timelapse(object):
     if config is None: config = self.config
     if state is None: state = self.state
 
-    delta = config.targetBrightness - state.lastbr
-    #Adj = lambda v: math.log( math.exp(v)*(1.0+1.0*delta*gamma/self.targetBrightness) )
+    delta = config.targetBrightness - state.brData[-1]
     Adj = lambda v: v * (1.0 + 1.0 * delta * config.gamma 
                          / config.targetBrightness)
     x = config.SSToFloat(state.currentss)
-    if x <= 0.01: x = 0.01
     x = Adj(x)
+    if x < 0: x = 0
+    if x > 1: x = 1
     state.currentss = config.floatToSS(x)
     #Find an appropriate framerate.
     #For low shutter speeds, ths can considerably speed up the capture.
@@ -256,29 +249,29 @@ class timelapse(object):
 
     # Find init params with small pictures and high gamma, to work quickly.
     cfg = config.to_dict()
-    cfg['w'] = 64
-    cfg['h'] = 48
+    cfg['w'] = 128
+    cfg['h'] = 96
     cfg['gamma'] = 2.0
     init_config = timelapse_config(cfg)
     
-    while abs(config.targetBrightness - state.lastbr) > 4:
+    state.brData = [0]
+    state.xData = [0]
+
+    while abs(config.targetBrightness - state.brData[-1]) > 4:
       im = self.capture(init_config, state)
-      state.lastbr = self.avgbrightness(im)
-      state.avgbr = state.lastbr
+      state.brData = [self.avgbrightness(im)]
+      state.xData = [self.config.SSToFloat(state.currentss)]
 
       #Dynamically adjust ss and iso.
       self.dynamic_adjust(init_config, state)
-      x = config.SSToFloat(state.currentss)
-      print ('ss: % 10d\tx: % 5.3f br: % 4d\t' 
-             % (state.currentss, round(x, 2), round(state.lastbr, 2)))
-      if x >= 1.0:
-        x = 1.0
+      print ('ss: % 10d\tx: % 6.4f br: % 4d\t' 
+             % (state.currentss, round(state.xData[-1], 4), round(state.brData[-1], 4)))
+      if state.xData[-1] >= 1.0:
         if killtoken == True:
           break
         else:
           killtoken = True
-      elif x <= 0.0:
-        x = 0.0
+      elif state.xData[-1] <= 0.0:
         if killtoken == True:
           break
         else:
@@ -300,15 +293,15 @@ class timelapse(object):
 
     state.lastbr = self.avgbrightness(im)
     if len(state.brData) >= config.brightwidth:
-      state.brData[state.brindex % config.brightwidth] = state.lastbr
-    else:
-      state.brData.append(state.lastbr)
+      state.brData = state.brData[1:]
+      state.xData = state.xData[1:]
+    state.xData.append(self.config.SSToFloat(state.currentss))
+    state.brData.append(state.lastbr)
 
     #Dynamically adjust ss and iso.
     state.avgbr = sum(state.brData) / len(state.brData)
     self.dynamic_adjust(config, state)
     state.shots_taken += 1
-    state.brindex = (state.brindex + 1) % config.brightwidth
 
     delta = config.targetBrightness - state.lastbr
     if abs(delta) > config.maxdelta:
